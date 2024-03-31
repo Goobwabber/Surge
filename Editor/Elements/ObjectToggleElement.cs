@@ -138,7 +138,7 @@ namespace Flare.Editor.Elements
             var enabledColor = FlareUI.EnabledColor;
             var disabledColor = FlareUI.DisabledColor;
             
-            var targetColor = (int)value is 0 ? enabledColor : disabledColor;
+            var targetColor = (int)value is 0 ? disabledColor : enabledColor;
             
             field.Q<TextElement>().WithColor(targetColor);
         }

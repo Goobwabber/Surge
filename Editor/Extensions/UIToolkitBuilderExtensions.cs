@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using Flare.Editor.Elements;
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -105,6 +106,12 @@ namespace Flare.Editor.Extensions
         {
             field.tooltip = tooltip;
             return field;
+        }
+
+        public static TextElement WithText(this TextElement element, string text)
+        {
+            element.text = text;
+            return element;
         }
 
         public static T WithFontStyle<T>(this T element, FontStyle fontStyle) where T : VisualElement

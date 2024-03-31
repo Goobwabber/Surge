@@ -2,7 +2,7 @@
 {
     internal enum ToggleMenuState
     {
-        Active,
-        Inactive
+        Inactive,
+        Active
     }
 }

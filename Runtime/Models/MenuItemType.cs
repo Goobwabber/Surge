@@ -4,6 +4,7 @@
     {
         Button,
         Toggle,
-        Radial
+        Radial,
+        FourAxis,
     }
 }
