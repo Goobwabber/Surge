@@ -9,8 +9,7 @@ using nadena.dev.ndmf;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Pool;
-using PropertyInfo = Flare.Models.PropertyInfo;
-
+/*
 namespace Flare.Editor.Passes
 {
     /// <summary>
@@ -595,4 +594,4 @@ namespace Flare.Editor.Passes
             ListPool<Component>.Release(contexts);
         } 
     }
-}
+}*/

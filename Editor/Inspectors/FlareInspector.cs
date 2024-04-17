@@ -15,13 +15,12 @@ namespace Flare.Editor.Inspectors
         private static readonly Dictionary<Type, FieldInfo[]> _fieldInfoCache = new();
 
         protected virtual void OnInitialization() { }
-        
+
         private void OnEnable()
         {
             OnInitialization();
-            InjectSerializedProperties(this,
-                propertyName => serializedObject.Property(propertyName) ?? serializedObject.Field(propertyName)
-            );
+            InjectSerializedProperties(this, serializedObject, 
+                propertyName => serializedObject.Property(propertyName) ?? serializedObject.Field(propertyName));
         }
 
         public override VisualElement CreateInspectorGUI()
@@ -62,7 +61,7 @@ namespace Flare.Editor.Inspectors
 
         protected abstract VisualElement BuildUI(VisualElement root);
         
-        private static void InjectSerializedProperties(object target, Func<string, SerializedProperty?> locator)
+        private static void InjectSerializedProperties(object target, SerializedObject obj, Func<string, SerializedProperty?> locator)
         {
             var type = target.GetType();
             if (!_fieldInfoCache.TryGetValue(type, out var fields))
@@ -83,7 +82,7 @@ namespace Flare.Editor.Inspectors
                 var property = locator(propertyName);
                 
                 // If we have the property, set the field to it.
-                if (property is null)
+                if (property is null && (property = obj.Property(propertyName) ?? obj.Field(propertyName)) is null)
                     continue;
                 
                 // Process either SerializedProperty or nested views
@@ -100,7 +99,7 @@ namespace Flare.Editor.Inspectors
                         continue;
 
                     // ReSharper disable once NullCoalescingConditionIsAlwaysNotNullAccordingToAPIContract
-                    InjectSerializedProperties(view, prop => property.Property(prop) ?? property.Field(prop));
+                    InjectSerializedProperties(view, obj, prop => property.Property(prop) ?? property.Field(prop));
                 }
             }
         }

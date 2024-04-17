@@ -5,7 +5,7 @@ using nadena.dev.ndmf;
 using UnityEditor;
 using UnityEngine;
 using VRC.SDK3.Avatars.ScriptableObjects;
-
+/*
 namespace Flare.Editor.Passes
 {
     internal class ParametrizationPass : Pass<ParametrizationPass>
@@ -52,4 +52,4 @@ namespace Flare.Editor.Passes
             vrcParams.parameters = vrcParams.parameters.Concat(flareParameters).ToArray();
         }
     }
-}
+}*/

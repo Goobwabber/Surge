@@ -9,7 +9,7 @@ using UnityEngine;
 using VRC.SDK3.Avatars.Components;
 using VRC.SDKBase;
 using Object = UnityEngine.Object;
-
+/*
 namespace Flare.Editor.Passes
 {
     internal class TagizationPass : Pass<TagizationPass>
@@ -221,4 +221,4 @@ namespace Flare.Editor.Passes
             transition.Destination.Exit();
         }
     }
-}
+}*/

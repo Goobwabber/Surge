@@ -5,7 +5,7 @@ using Sucrose.Animation;
 using UnityEditor.Animations;
 using UnityEngine;
 using Random = System.Random;
-
+/*
 namespace Flare.Editor.Passes
 {
     internal class ControlPass : Pass<ControlPass>
@@ -212,4 +212,4 @@ namespace Flare.Editor.Passes
             return _random.Next(100_000, 1_000_000);
         }
     }
-}
+}*/

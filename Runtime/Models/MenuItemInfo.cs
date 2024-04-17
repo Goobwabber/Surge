@@ -7,7 +7,7 @@ namespace Flare.Models
     internal class MenuItemInfo
     {
         [field: SerializeField]
-        public string Name { get; set; } = string.Empty;
+        public string Path { get; set; } = string.Empty;
 
         [field: SerializeField]
         public Texture2D Icon { get; private set; } = null!;
@@ -17,21 +17,30 @@ namespace Flare.Models
 
         [field: SerializeField]
         public bool IsSaved { get; private set; } = true;
-        
+
         [field: SerializeField]
-        public bool DefaultState { get; private set; }
-        
+        public ToggleMenuState DefaultState { get; private set; } = ToggleMenuState.Inactive;
+
         [field: Range(0, 1)]
         [field: SerializeField]
         public float DefaultRadialValue { get; private set; }
-        
-        [field: SerializeField]
-        public bool IsTagTrigger { get; private set; }
 
         [field: SerializeField]
-        public string Tag { get; private set; } = string.Empty;
-        
+        public PuppetMenuState DefaultPuppetState { get; private set; }
+
         [field: SerializeField]
-        public ToggleMode TriggerMode { get; private set; }
+        public InterpolationInfo Interpolation { get; private set; } = new();
+
+        [field: SerializeField]
+        public bool ApplyToAvatar { get; private set; } = new();
+
+        [field: SerializeField]
+        public bool ShowDefault { get; private set; }
+
+        [field: SerializeField]
+        public bool ShowIcon { get; private set; }
+
+        [field: SerializeField]
+        public bool ShowDuration { get; private set; }
     }
 }

@@ -1,15 +1,17 @@
 ﻿using Flare.Editor.Attributes;
+using Flare.Editor.Elements;
 using Flare.Editor.Extensions;
 using Flare.Models;
 using UnityEditor;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Flare.Editor.Views
 {
     internal class MenuItemControlView : IView
     {
-        [PropertyName(nameof(MenuItemInfo.Name))]
-        private readonly SerializedProperty _nameProperty = null!;
+        [PropertyName(nameof(MenuItemInfo.Path))]
+        private readonly SerializedProperty _pathProperty = null!;
 
         [PropertyName(nameof(MenuItemInfo.Type))]
         private readonly SerializedProperty _typeProperty = null!;
@@ -19,88 +21,166 @@ namespace Flare.Editor.Views
 
         [PropertyName(nameof(MenuItemInfo.IsSaved))]
         private readonly SerializedProperty _isSavedProperty = null!;
-        
+
         [PropertyName(nameof(MenuItemInfo.DefaultState))]
         private readonly SerializedProperty _defaultStateProperty = null!;
-        
+
         [PropertyName(nameof(MenuItemInfo.DefaultRadialValue))]
-        private readonly SerializedProperty _defaultRadialValueProperty = null!;
+        private readonly SerializedProperty _defaultRadialProperty = null!;
 
-        [PropertyName(nameof(MenuItemInfo.IsTagTrigger))]
-        private readonly SerializedProperty _isTagTriggerProperty = null!;
+        [PropertyName(nameof(MenuItemInfo.DefaultPuppetState))]
+        private readonly SerializedProperty _defaultPuppetProperty = null!;
 
-        [PropertyName(nameof(MenuItemInfo.Tag))]
-        private readonly SerializedProperty _tagProperty = null!;
-        
-        private readonly FlareControl _control;
-        
-        public MenuItemControlView(FlareControl control) => _control = control;
-        
+        [PropertyName(nameof(MenuItemInfo.Interpolation))]
+        private readonly SerializedProperty _interpolationProperty = null!;
+
+        [PropertyName(nameof(MenuItemInfo.ApplyToAvatar))]
+        private readonly SerializedProperty _applyToAvatarProperty = null!;
+
+        [PropertyName(nameof(MenuItemInfo.ShowIcon))]
+        private readonly SerializedProperty _showIconProperty = null!;
+
+        [PropertyName(nameof(MenuItemInfo.ShowDefault))]
+        private readonly SerializedProperty _showDefaultProperty = null!;
+
+        [PropertyName(nameof(MenuItemInfo.ShowDuration))]
+        private readonly SerializedProperty _showDurationProperty = null!;
+
         public void Build(VisualElement root)
         {
-            // Menu Item Type
-            var typeField = root.CreatePropertyField(_typeProperty)
-                .WithLabel("Menu Type");
-            
-            // Name
-            var nameField = root.CreatePropertyField(_nameProperty)
-                .WithTooltip("The name of the menu item, used for generating the parameter name and the display in the hand menu.");
-            
-            nameField.RegisterValueChangeCallback(ctx =>
-            {
-                if (!_control || _control.Settings.SynchronizeName is false)
-                    return;
-                
-                _control.SetName(ctx.changedProperty.stringValue);
-            });
-            
+            // Path
+            var topHorizontal = root.CreateHorizontal();
+
+            var parentFlareMenu = _pathProperty.serializedObject.targetObject is GameObject go ? go.GetComponentInParent<FlareMenu>() : null;
+            var pathFieldTooltip = parentFlareMenu is not null ?
+                "The name of the menu item, used for generating the parameter name and the display in the hand menu." :
+                "The path of the menu item, used for generating the parameter name and the display in the hand menu. Use '/' to place something in a submenu.";
+            var pathField = topHorizontal.CreatePropertyField(_pathProperty).WithGrow(1f).WithLabel(parentFlareMenu is not null ? "Menu Name" : "Menu Path").WithTooltip(pathFieldTooltip);
+
+            foreach (var element in pathField.Children())
+                Debug.Log(element.name);
+
+            var paneMenu = new PaneMenu().WithWidth(10f).WithHeight(20f).WithMarginLeft(20f);
+            paneMenu.style.marginRight = 5f;
+            topHorizontal.Add(paneMenu);
+
             // Icon
-            root.CreatePropertyField(_iconProperty)
+            var iconField = root.CreatePropertyField(_iconProperty).WithLabel("Custom Icon")
                 .WithTooltip("The icon used when displaying this item in the hand menu.");
+            //iconField.labelElement.WithWidth(100f);
 
-            var savedField = root.CreatePropertyField(_isSavedProperty)
-                .WithTooltip("Is the control value saved between worlds?")
-                .WithMarginTop(2f); // (Fix) Toggle property fields are annoyingly smaller than others.
-            
-            var defaultStateField = root.CreatePropertyField(_defaultStateProperty)
-                .WithLabel("Default Toggle Value")
-                .WithTooltip("Is this menu item ON or OFF by default?")
-                .WithMarginTop(2f); // (Fix) Toggle property fields are annoyingly smaller than others.
-            
-            var defaultRadialValueField = root.CreatePropertyField(_defaultRadialValueProperty);
+            // Default Radial Value
+            var defaultRadialField = root.CreatePropertyField(_defaultRadialProperty).WithHeight(20f)
+                .WithTooltip("The default position for the radial in the menu.");
+            //defaultRadialField.Q<TextField>().WithWidth(130f);
 
-            var tagTrigger = root.CreatePropertyField(_isTagTriggerProperty)
-                .WithLabel("Is Tag Trigger (Experimental)")
-                .WithMarginTop(2f); // (Fix) Toggle property fields are annoyingly smaller than others.
-            
-            var tagOption = root.CreatePropertyField(_tagProperty)
-                .WithLabel("Tag (Experimental)")
-                .WithMarginLeft(13f);
-            
-            tagTrigger.RegisterValueChangeCallback(_ => UpdateAllFieldVisuals(_control.MenuItem.Type));
+            // Duration
+            var durationField = root.CreatePropertyField(_interpolationProperty.Property(nameof(InterpolationInfo.Duration)))
+                .WithTooltip("The duration (in seconds) this control takes to execute. A value of 0 means instant. This can also be called interpolation.");
+            //durationField.Q<TextField>().WithWidth(130f);
 
-            UpdateAllFieldVisuals((MenuItemType)_typeProperty.enumValueIndex);
-            
-            typeField.RegisterValueChangeCallback(ctx =>
-                UpdateAllFieldVisuals((MenuItemType)ctx.changedProperty.enumValueIndex)
-            );
-            
-            root.CreateHorizontalSpacer(10f);
-            
-            return;
 
-            void UpdateAllFieldVisuals(MenuItemType type)
+
+            // Settingbar
+            var settingHorizontal = root.CreateHorizontal();
+            settingHorizontal.style.alignItems = Align.FlexStart;
+            settingHorizontal.style.flexWrap = Wrap.Wrap;
+            settingHorizontal.style.marginTop = 1f;
+            settingHorizontal.style.marginBottom = 2f;
+
+            // Settingbar Type
+            var typeField = new LabelledEnumField((MenuItemType)_typeProperty.enumValueIndex, "Type: ",
+                "The type of menu item this control is.", _typeProperty);
+            settingHorizontal.Add(typeField);
+
+            // Settingbar Default (Toggle)
+            var defaultField = new LabelledEnumField((ToggleMenuState)_defaultStateProperty.enumValueIndex, "Default: ",
+                "Is this menu item ON or OFF by default?",
+                value => value == (int)ToggleMenuState.Inactive ? FlareUI.DisabledColor : FlareUI.EnabledColor,
+                _defaultStateProperty);
+            settingHorizontal.Add(defaultField);
+
+            // Settingbar Default (Puppet)
+            var defaultPuppetField = new LabelledEnumField((PuppetMenuState)_defaultPuppetProperty.enumValueIndex, "Default: ",
+                "The default state of the control.", _defaultPuppetProperty);
+            settingHorizontal.Add(defaultPuppetField);
+
+            // Settingbar Default (Radial)
+            var defaultLabel = new SettingLabelElement("Default", "This control has a custom default value.");
+            settingHorizontal.Add(defaultLabel);
+            // Settingbar Saved
+            var savedLabel = new SettingLabelElement("Saved", "This control is saved between worlds.");
+            settingHorizontal.Add(savedLabel);
+            // Settingbar Icon 
+            var iconLabel = new SettingLabelElement("Icon", "This control uses a custom icon.");
+            settingHorizontal.Add(iconLabel);
+            // Settingbar Apply To Avatar
+            var applyAvatarLabel = new SettingLabelElement("Apply To Avatar", "(BETA) This control will assign its default values to the avatar on upload.", FlareUI.GetWarningImage());
+            settingHorizontal.Add(applyAvatarLabel);
+            // Settingbar Duration
+            var interpolationLabel = new SettingLabelElement("Interpolation", "Smooths between animation states rather than being instant.");
+            settingHorizontal.Add(interpolationLabel);
+            // Affected by Trigger Tags
+            var tagLabel = new SettingLabelElement("Tagged", "This control can be overriden by trigger tags.");
+            settingHorizontal.Add(tagLabel);
+
+            // Settings context menu
+            paneMenu.SetData(SettingsMenuPopulate);
+            ContextualMenuManipulator settingMenu = new(SettingsMenuPopulate);
+            settingMenu.activators.Add(new ManipulatorActivationFilter { button = MouseButton.RightMouse });
+            settingHorizontal.AddManipulator(settingMenu);
+
+            void SettingsMenuPopulate(ContextualMenuPopulateEvent evt)
             {
-                var isRadial = type is MenuItemType.Radial;
-                var isButton = type is MenuItemType.Button;
-                
-                defaultRadialValueField.style.display = isRadial ? DisplayStyle.Flex : DisplayStyle.None;
-                defaultStateField.style.display = isRadial || isButton ? DisplayStyle.None : DisplayStyle.Flex;
-                
-                tagTrigger.Visible(isButton);
-                savedField.Visible(!isButton);
-                tagOption.Visible(isButton && _control.MenuItem.IsTagTrigger);
+                var enabledStatus = DropdownMenuAction.Status.Checked;
+                var disabledStatus = DropdownMenuAction.Status.Normal;
+                var lockedStatus = DropdownMenuAction.Status.Disabled;
+                var enabledLockedStatus = enabledStatus | lockedStatus;
+
+                var buttonMode = _typeProperty.enumValueIndex == (int)MenuItemType.Button;
+                var puppetMode = _typeProperty.enumValueIndex == (int)MenuItemType.FourAxis;
+
+                evt.menu.AppendAction("Saved Between Worlds",
+                    evt => UpdateValues(_isSavedProperty),
+                    buttonMode ? lockedStatus : _isSavedProperty.boolValue ? enabledStatus : disabledStatus);
+                evt.menu.AppendAction("Custom Default Value",
+                    evt => UpdateValues(_showDefaultProperty),
+                    puppetMode ? enabledLockedStatus : buttonMode ? lockedStatus : _showDefaultProperty.boolValue ? enabledStatus : disabledStatus);
+                evt.menu.AppendAction("Custom Icon",
+                    evt => UpdateValues(_showIconProperty),
+                    _showIconProperty.boolValue ? enabledStatus : disabledStatus);
+                evt.menu.AppendAction("Apply To Avatar",
+                    evt => UpdateValues(_applyToAvatarProperty),
+                    buttonMode ? lockedStatus : _applyToAvatarProperty.boolValue ? enabledStatus : disabledStatus);
+                evt.menu.AppendAction("Property Interpolation",
+                    evt => UpdateValues(_showDurationProperty),
+                    _showDurationProperty.boolValue ? enabledStatus : disabledStatus);
+
+                void UpdateValues(SerializedProperty prop)
+                {
+                    prop.boolValue = !prop.boolValue;
+                    prop.serializedObject.ApplyModifiedProperties();
+                    UpdateVisibility();
+                }
             }
+
+            void UpdateVisibility()
+            {
+                defaultRadialField.Visible(_showDefaultProperty.boolValue && _typeProperty.enumValueIndex == (int)MenuItemType.Radial);
+                defaultField.Visible(_showDefaultProperty.boolValue && _typeProperty.enumValueIndex == (int)MenuItemType.Toggle);
+                defaultPuppetField.Visible(_typeProperty.enumValueIndex == (int)MenuItemType.FourAxis);
+                defaultLabel.Visible(_showDefaultProperty.boolValue && _typeProperty.enumValueIndex == (int)MenuItemType.Radial);
+                savedLabel.Visible(_isSavedProperty.boolValue && _typeProperty.enumValueIndex != (int)MenuItemType.Button);
+                iconField.Visible(_showIconProperty.boolValue);
+                iconLabel.Visible(_showIconProperty.boolValue);
+                durationField.Visible(_showDurationProperty.boolValue);
+                applyAvatarLabel.Visible(_applyToAvatarProperty.boolValue);
+                interpolationLabel.Visible(_showDurationProperty.boolValue);
+                tagLabel.Visible(false);
+            }
+
+            UpdateVisibility();
+            typeField.RegisterValueChangedCallback(_ => UpdateVisibility());
         }
     }
 }

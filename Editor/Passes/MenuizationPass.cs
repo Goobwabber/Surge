@@ -7,7 +7,7 @@ using UnityEditor;
 using UnityEngine;
 using VRC.SDK3.Avatars.ScriptableObjects;
 using Object = UnityEngine.Object;
-
+/*
 namespace Flare.Editor.Passes
 {
     internal class MenuizationPass : Pass<MenuizationPass>
@@ -166,4 +166,4 @@ namespace Flare.Editor.Passes
             }
         }
     }
-}
+}*/

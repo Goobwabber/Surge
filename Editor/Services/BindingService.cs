@@ -13,10 +13,17 @@ namespace Flare.Editor.Services
     {
         private readonly Type[] _types;
         private readonly GameObject _root;
-        private readonly GameObject?[] _gameObjects;
         private readonly Dictionary<Type, string> _assemblyQualifiedNames = new();
         private readonly bool _gameObjectSearch;
-        
+
+        private GameObject?[] _gameObjects;
+        private GameObject?[] _searchableObjects = Array.Empty<GameObject>();
+        private IEnumerable<FlareProperty> _properties = Array.Empty<FlareProperty>();
+        private Dictionary<string, FlareProperty> _validatedBindings = new Dictionary<string, FlareProperty>();
+
+        private bool _invalidObjects = true;
+        private bool _invalidProperties = true;
+
         /// <summary>
         /// Creates a binding service from the provided root that scans for property bindings recursively if
         /// the corresponding GameObject has one of those types.
@@ -104,15 +111,35 @@ namespace Flare.Editor.Services
             
             return value;
         }
-        
-        public IEnumerable<FlareProperty> GetPropertyBindings(PropertyInfo[]? preSearch = null, bool pathMatch = true)
+
+        public void SetTargetObjects(GameObject?[] gameObjects)
         {
-            GameObject[] objectsToSearch;
+            _invalidObjects = true;
+            _invalidProperties = true;
+            _validatedBindings.Clear();
+            _gameObjects = gameObjects;
+        }
+
+        /// <summary>
+        /// Tries to get a list of objects searchable by the binding service.
+        /// </summary>
+        /// <param name="searchableObjects">Objects searchable by the binding service.</param>
+        /// <returns>Whether or not the get was successful.</returns>
+        public bool TryGetSearchableObjects(out GameObject[]? searchableObjects)
+        {
+            if (!_invalidObjects)
+            {
+                searchableObjects = _searchableObjects;
+                return true;
+            }
+
+            _invalidObjects = false;
+
             if (_gameObjects.Length is not 0 && _gameObjectSearch)
-                objectsToSearch = _gameObjects.Where(g => g!).Select(g => g!).ToArray();
+                searchableObjects = _gameObjects.Where(g => g!).Select(g => g!).ToArray();
             else if (_types.Length is not 0)
             {
-                objectsToSearch = _types.SelectMany(type =>
+                searchableObjects = _types.SelectMany(type =>
                 {
                     // Unfortunately we can't use a ListPool for this search as it requires a generic type to search.
                     return _root.GetComponentsInChildren(type, true)
@@ -123,14 +150,53 @@ namespace Flare.Editor.Services
             else
             {
                 if (_gameObjectSearch)
-                    return Array.Empty<FlareProperty>();
-                
+                {
+                    _searchableObjects = searchableObjects = Array.Empty<GameObject>();
+                    return false;
+                }
+
                 // We won't need this execution path but I still made it for completionism.
-                objectsToSearch = _root.GetComponentsInChildren<Component>(true)
+                searchableObjects = _root.GetComponentsInChildren<Component>(true)
                     .Select(component => component.gameObject)
                     .Distinct()
                     .ToArray();
             }
+
+            _searchableObjects = searchableObjects;
+            return true;
+        }
+
+        public bool TryGetPropertyBinding(Type? contextType, string name, out FlareProperty? value)
+        {
+            value = null;
+            if (contextType == null)
+                return false;
+            var bindingId = contextType.Name + name;
+            if (_validatedBindings.TryGetValue(bindingId, out value))
+                return true;
+            // this could be faster if we do a lazy search instead of a full search and then cache the results to build on later
+            var properties = GetPropertyBindings();
+            foreach (var property in properties)
+            {
+                if (property.ContextType != contextType)
+                    continue;
+                if (string.CompareOrdinal(property.Name, name) != 0)
+                    continue;
+                _validatedBindings.Add(bindingId, property);
+                value = property;
+                return true;
+            }
+            return false;
+        }
+
+        public IEnumerable<FlareProperty> GetPropertyBindings(AnimationPropertyInfo[]? preSearch = null, bool pathMatch = true)
+        {
+            if (!_invalidProperties && preSearch == null)
+                return _properties;
+            _invalidProperties = false;
+
+            if (!TryGetSearchableObjects(out GameObject?[] objectsToSearch))
+                return _properties = Array.Empty<FlareProperty>(); // is passing the reference for the actual list ok? probably for now
 
             var pseudoProperties = objectsToSearch.SelectMany(obj =>
             {
@@ -139,17 +205,17 @@ namespace Flare.Editor.Services
                     // Ignore EditorOnly properties.
                     if (typeof(IEditorOnly).IsAssignableFrom(binding.type))
                         return null;
-                    
+
                     var type = AnimationUtility.GetEditorCurveValueType(_root, binding);
 
                     // For the time being we'll only be working with the primitive float, int, and bool properties.
                     // In the future we may be able to support others like Materials and such.
-                    if (type != typeof(float) && type != typeof(int) && type != typeof(bool) && type != typeof(Material))
+                    if (type != typeof(float) && type != typeof(int) && type != typeof(bool) && type != typeof(Material))//typeof(UnityEngine.Object).IsAssignableFrom(type))
                         return null;
-                    
+
                     if (preSearch == null)
                         return new FlarePseudoProperty(type, obj, binding);
-                    
+
                     bool exists = false;
                     foreach (var pre in preSearch)
                     {
@@ -161,13 +227,13 @@ namespace Flare.Editor.Services
                             qualifiedName = binding.type.AssemblyQualifiedName;
                             _assemblyQualifiedNames[binding.type] = qualifiedName;
                         }
-                        
+
                         if (string.CompareOrdinal(pre.ContextType, qualifiedName) is not 0)
                             continue;
-                        
+
                         if (!binding.propertyName.StartsWith(pre.Name, StringComparison.Ordinal))
                             continue;
-                            
+
                         exists = true;
                         break;
                     }
@@ -175,7 +241,7 @@ namespace Flare.Editor.Services
                     return !exists ? null : new FlarePseudoProperty(type, obj, binding);
                 });
             }).Where(property => property is not null).Select(property => property!).ToArray();
-            
+
             // Convert the pseudo properties into a dictionary, this next step requires a lot of lookups
             // which will get much slower with large amounts of properties (thanks poiyomi shaders).
             var pseudoSearch = pseudoProperties
@@ -198,7 +264,7 @@ namespace Flare.Editor.Services
                 });
 
             List<FlareProperty> properties = new();
-            
+
             foreach (var potential in potentialMultiProperties)
             {
                 // Make sure we're working with float values
@@ -233,7 +299,7 @@ namespace Flare.Editor.Services
                     ? PropertyColorType.RGB
                     : baseName.Contains("Color") && !baseName.Contains("HDR") && !baseName.Contains("_ST")
                         ? PropertyColorType.HDR : PropertyColorType.None;
-                
+
                 var propsToInclude = new[] { potential, second, third, fourth }.Where(p => p != null);
 
                 FlareProperty property = new(
@@ -247,10 +313,10 @@ namespace Flare.Editor.Services
                     null,
                     propsToInclude.ToArray()
                 );
-                
+
                 properties.Add(property);
             }
-            
+
             // Now that we've collected the vector based properties, we build a dictionary off the included properties
             // to know which properties NOT to add when adding all the other pseudo properties.
             // The Dictionary is for efficiency with larger amounts of properties (once again).
@@ -259,7 +325,7 @@ namespace Flare.Editor.Services
                 .GroupBy(p => p.TrueId)
                 .Select(p => p.First())
                 .ToDictionary(p => p.TrueId, p => p);
-            
+
             foreach (var pseudoProperty in pseudoProperties)
             {
                 // Skip over properties we added in the last step.
@@ -288,10 +354,12 @@ namespace Flare.Editor.Services
                     pseudoProperty,
                     null
                 );
-                
+
                 properties.Add(property);
             }
-            
+
+            if (preSearch == null)
+                _properties = properties;
             return properties;
         }
 

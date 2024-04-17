@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Flare.Models
 {
     [Serializable]
-    internal class PropertyInfo
+    internal class AnimationPropertyInfo
     {
         [field: SerializeField]
         public string Name { get; internal set; } = string.Empty;
@@ -22,30 +22,18 @@ namespace Flare.Models
         public string ContextType { get; internal set; } = string.Empty;
 
         [field: SerializeField]
-        public float Analog { get; internal set; }
+        public string ObjectValueType { get; internal set; } = string.Empty;
 
         [field: SerializeField]
-        public Vector4 Vector { get; internal set; }
+        public float DefaultAnalog { get; internal set; }
 
         [field: SerializeField]
-        public UnityEngine.Object Object { get; internal set; }
+        public Vector4 DefaultVector { get; internal set; }
 
         [field: SerializeField]
-        public string ObjectType { get; internal set; }
+        public UnityEngine.Object? DefaultObject { get; internal set; }
 
         [field: SerializeField]
-        public ControlState State { get; internal set; }
-
-        [field: SerializeField]
-        public bool OverrideDefaultValue { get; internal set; }
-
-        [field: SerializeField]
-        public float OverrideDefaultAnalog { get; internal set; }
-
-        [field: SerializeField]
-        public UnityEngine.Object OverrideDefaultObject { get; internal set; }
-
-        [field: SerializeField]
-        public Vector4 OverrideDefaultVector { get; internal set; }
+        public AnimationStateInfo[] AnimationStates { get; private set; } = Array.Empty<AnimationStateInfo>();
     }
 }

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-namespace Flare.Models
+﻿namespace Flare.Models
 {
     internal enum PuppetMenuState
     {

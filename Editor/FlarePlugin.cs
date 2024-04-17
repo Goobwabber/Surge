@@ -22,12 +22,13 @@ namespace Flare.Editor
             
             InPhase(BuildPhase.Transforming)
                 .AfterPlugin("nadena.dev.modular-avatar")
-                .Run<ContainerizationPass>()
-                .Then.Run<MenuGenerationPass>()
-                .Then.Run<ControlPass>()
-                .Then.Run<ParametrizationPass>()
-                .Then.Run<MenuizationPass>()
-                .Then.Run<TagizationPass>()
+                //.Run<ContainerizationPass>()
+                //.Then
+                .Run<MenuGenerationPass>()
+                //.Then.Run<ControlPass>()
+                //.Then.Run<ParametrizationPass>()
+                //.Then.Run<MenuizationPass>()
+                //.Then.Run<TagizationPass>()
                 .Then.Run<CleansePass>();
         }
     }

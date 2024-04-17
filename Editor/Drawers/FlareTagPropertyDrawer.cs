@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using Flare.Editor.Editor.Extensions;
 using Flare.Editor.Extensions;
 using Flare.Models;
 using UnityEditor;

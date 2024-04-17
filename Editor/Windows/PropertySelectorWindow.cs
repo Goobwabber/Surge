@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using Flare.Editor.Editor.Extensions;
 using Flare.Editor.Elements;
 using Flare.Editor.Extensions;
 using Flare.Editor.Models;
@@ -12,20 +11,22 @@ using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UIElements;
 using VRC.SDKBase;
-using PropertyInfo = Flare.Models.PropertyInfo;
+using AnimationPropertyInfo = Flare.Models.AnimationPropertyInfo;
 
 namespace Flare.Editor.Windows
 {
     internal class PropertySelectorWindow : EditorWindow
     {
         private SerializedProperty? _target;
+        private BindingService? _bindingService;
         private static Rect? _lastSize;
-        
-        public static void Present(SerializedProperty property)
+
+        public static void Present(SerializedProperty property, BindingService bindingService)
         {
             var window = GetWindow<PropertySelectorWindow>();
             window.titleContent = new GUIContent("Flare Property Selector");
             window._target = property;
+            window._bindingService = bindingService;
 
             var screenPos = GUIUtility.GUIToScreenPoint(
                 Event.current != null ? Event.current.mousePosition : Vector3.zero
@@ -60,10 +61,10 @@ namespace Flare.Editor.Windows
                 return;
 
             var groupsProperty = property.serializedObject
-                .Property(nameof(FlareControl.PropertyGroupCollection))!;
+                .Property(nameof(FlareControl.AnimationGroupCollection))!;
 
             // Writing this makes me uncomfortable... Unity Editor dev is pain.
-            var propertyGroups = ((PropertyGroupCollectionInfo)groupsProperty.boxedValue).Groups;
+            var propertyGroups = ((AnimationGroupCollectionInfo)groupsProperty.boxedValue).Groups;
             
             // Use the property path to find the index of the Property Group
             // In my opinion, this is pretty cursed, but it's guaranteed to work.
@@ -75,12 +76,7 @@ namespace Flare.Editor.Windows
 
             var propertyGroup = propertyGroups[groupIndex];
 
-            var objects = (propertyGroup.SelectionType switch
-            {
-                PropertySelectionType.Normal => propertyGroup.Inclusions,
-                PropertySelectionType.Avatar => propertyGroup.Exclusions,
-                _ => throw new ArgumentOutOfRangeException()
-            }).Distinct().ToArray();
+            var objects = propertyGroup.Objects.Select(o => o is Component c ? c.gameObject : o is GameObject g ? g : null).ToArray();
 
             // keeping this here in case we ever find a way to differentiate between context type on the UI.
             // for now, renderer type properties will automatically be merged.
@@ -91,14 +87,27 @@ namespace Flare.Editor.Windows
             //mergeRenderersToggle.WithPadding(2f);
             //mergeRenderersToggle.value = true;
 
+            var typeFilterLabel = new Label("Target Type:").WithPadding(3f);
+            typeFilterLabel.style.marginLeft = StyleKeyword.Auto;
+
+            var typeFilter = new ComponentTypeDropdownField(null);
+            typeFilter.NullSelection = true;
+
             var avatarGameObject = descriptor.gameObject;
             var headingGroup = root.CreateHorizontal();
             headingGroup.CreateLabel($"Current Avatar: {avatarGameObject.name}").WithPadding(3f);
+            headingGroup.Add(typeFilterLabel);
+            headingGroup.Add(typeFilter);
             //headingGroup.Add(mergeRenderersToggle);
 
-            var binder = propertyGroup.SelectionType is PropertySelectionType.Normal ?
-                new BindingService(avatarGameObject, objects)
-                : new BindingService(avatarGameObject, objects, typeof(Renderer), typeof(Behaviour));
+            if (propertyGroup.AnimationType is AnimationGroupType.ObjectToggle)
+            {
+                // wtf?
+                // Maybe make an error happen? but shouldn't be possible so
+                return;
+            }
+
+            var binder = _bindingService;
 
             ToolbarSearchField searchField = new();
             root.Add(searchField);
@@ -107,11 +116,23 @@ namespace Flare.Editor.Windows
             var buttonGroup = root.CreateHorizontal();
             buttonGroup.CreateButton("Blendshapes", () => searchField.value = "t:Blendshape ").WithGrow(1f);
             buttonGroup.CreateButton("Materials", () => searchField.value = "t:Material ").WithGrow(1f);
-            buttonGroup.CreateButton("Everything", () => searchField.value = string.Empty).WithGrow(1f);
+            buttonGroup.CreateButton("Everything", () => 
+            {
+                if (searchField.value == string.Empty)
+                    typeFilter.value = null;
+                else
+                    searchField.value = string.Empty;
+            }).WithGrow(1f);
             searchField.Focus();
 
+            // ui done, load things now
+            // first: load searchable objects
+            _ = binder.TryGetSearchableObjects(out GameObject?[] searchableObjects); // dont care if fails, returns empty array if so
+            typeFilter.Push(searchableObjects.Select(o => (UnityEngine.Object?)o).ToArray());
+
+            // second: load searchable properties
             var bindingSearch = binder.GetPropertyBindings().Where(b => b.GameObject != avatarGameObject);
-            if (propertyGroup.SelectionType is PropertySelectionType.Avatar)
+            if (propertyGroup.AnimationType is AnimationGroupType.Avatar)
                 bindingSearch = bindingSearch.GroupBy(p => p.QualifiedId).Select(g => g.First());
 
             var bindings = bindingSearch.ToArray();
@@ -143,37 +164,15 @@ namespace Flare.Editor.Windows
                     var propName = pseudoProperty?.Name ?? binding.Name;
                     var type = pseudoProperty is null ? binding.Type : PropertyValueType.Float;
                     var color = pseudoProperty is null ? binding.Color : PropertyColorType.None;
-                    //var contextType = mergeRenderersToggle.value && typeof(Renderer).IsAssignableFrom(binding.ContextType) ? typeof(Renderer) : binding.ContextType;
-                    var contextType = typeof(Renderer).IsAssignableFrom(binding.ContextType) ? typeof(Renderer) : binding.ContextType;
+                    var contextType = typeFilter.value is not null && typeFilter.value.IsAssignableFrom(binding.ContextType) ? typeFilter.value : binding.ContextType;
 
-                    property.Property(nameof(PropertyInfo.Name)).SetValue(propName);
-                    property.Property(nameof(PropertyInfo.Path)).SetValue(binding.Path);
-                    property.Property(nameof(PropertyInfo.ValueType)).SetValue(type);
-                    property.Property(nameof(PropertyInfo.ColorType)).SetValue(color);
-                    property.Property(nameof(PropertyInfo.ContextType)).SetValue(contextType.AssemblyQualifiedName!);
+                    property.Property(nameof(AnimationPropertyInfo.Name)).SetValue(propName);
+                    property.Property(nameof(AnimationPropertyInfo.Path)).SetValue(binding.Path);
+                    property.Property(nameof(AnimationPropertyInfo.ValueType)).SetValue(type);
+                    property.Property(nameof(AnimationPropertyInfo.ColorType)).SetValue(color);
+                    property.Property(nameof(AnimationPropertyInfo.ContextType)).SetValue(contextType.AssemblyQualifiedName!);
 
                     float? predictiveValue = null;
-                    
-                    // Predictive property value assignment
-                    if (property.serializedObject.targetObject is FlareControl { Type: ControlType.Menu } control)
-                    {
-                        if (type is PropertyValueType.Float)
-                        {
-                            var menuInfo = control.MenuItem;
-                            var nonZeroTarget = binding.Source is FlarePropertySource.Blendshape ? 100f : 1f;
-                        
-                            var defaultValue = binder.GetPropertyValue<float>(binding);
-
-                            predictiveValue = defaultValue == 0 ? nonZeroTarget : 0;
-                            
-                            //if (oppositeTarget >= defaultValue && defaultValue >= 0)
-                            //    predictiveValue = defaultValue is 0 ? oppositeTarget : 0f;
-
-                            var predictiveDisable = menuInfo.Type is MenuItemType.Toggle && menuInfo.DefaultState;
-                            property.Property(nameof(PropertyInfo.State))
-                                .SetValue(predictiveDisable ? ControlState.Disabled : ControlState.Enabled);
-                        }
-                    }
                     
                     switch (type)
                     {
@@ -189,21 +188,21 @@ namespace Flare.Editor.Windows
                             
                             defaultValue = (float)defaultValue;
                             defaultValue = predictiveValue ?? defaultValue;
-                            property.Property(nameof(PropertyInfo.Analog)).SetValue(defaultValue);
+                            property.Property(nameof(AnimationPropertyInfo.DefaultAnalog)).SetValue(defaultValue);
                             break;
                         }
                         case PropertyValueType.Vector2 or PropertyValueType.Vector3 or PropertyValueType.Vector4:
                         {
                             var defaultValue = (Vector4)binder.GetPropertyValue(binding);
-                            property.Property(nameof(PropertyInfo.Vector)).SetValue(defaultValue);
+                            property.Property(nameof(AnimationPropertyInfo.DefaultVector)).SetValue(defaultValue);
                             break;
                         }
                         case PropertyValueType.Object:
                         {
                             var defaultValue = (UnityEngine.Object)binder.GetPropertyValue(binding);
-                            property.Property(nameof(PropertyInfo.Object)).SetValue(defaultValue);
+                            property.Property(nameof(AnimationPropertyInfo.DefaultObject)).SetValue(defaultValue);
                             var objectType = binding.GetPseudoProperty(0).Type;
-                            property.Property(nameof(PropertyInfo.ObjectType)).SetValue(objectType.AssemblyQualifiedName);
+                            property.Property(nameof(AnimationPropertyInfo.ObjectValueType)).SetValue(objectType.AssemblyQualifiedName);
                             break;
                         }
                     }
@@ -224,15 +223,15 @@ namespace Flare.Editor.Windows
                     isVector ? () => HandlePseudoProperty(1) : null,
                     isTriOrQuadVector ? () => HandlePseudoProperty(2) : null,
                     binding.Type is PropertyValueType.Vector4 ? () => HandlePseudoProperty(3) : null,
-                    propertyGroup.SelectionType is not PropertySelectionType.Avatar
+                    propertyGroup.AnimationType is not AnimationGroupType.Avatar
                 );
             });
 
-            void RefreshList(string search, bool mergeRenderers)
+            void RefreshList(string search, Type? filterType, bool mergeDuplicates)
             {
                 // TODO: Add optimistic search when typing (no backspace)
                 items.Clear();
-                if (search == string.Empty)
+                if (search == string.Empty && filterType is null)
                 {
                     items.AddRange(bindings);
                     list.RefreshItems();
@@ -249,10 +248,8 @@ namespace Flare.Editor.Windows
 
                 var searchParts = search.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-                using (HashSetPool<string>.Get(out var addedRendererParams))
+                using (HashSetPool<string>.Get(out var addedProps))
                 {
-                    var rendererType = typeof(Renderer);
-                    
                     foreach (var group in bindings)
                     {
                         var failedSearch = false;
@@ -278,13 +275,16 @@ namespace Flare.Editor.Windows
 
                         var contextType = group.ContextType;
 
-                        if (mergeRenderers && rendererType.IsAssignableFrom(contextType))
+                        if (mergeDuplicates)
                         {
-                            if (addedRendererParams.Contains(group.Name))
+                            if (addedProps.Contains(contextType.Name + group.Name))
                                 continue;
                             else
-                                addedRendererParams.Add(group.Name);
+                                addedProps.Add(contextType.Name + group.Name);
                         }
+
+                        if (filterType is not null && !filterType.IsAssignableFrom(contextType))
+                            continue;
 
                         items.Add(group);
                     }
@@ -294,7 +294,8 @@ namespace Flare.Editor.Windows
                 list.Query<BindablePropertyCell>().ForEach(BindablePropertyCell.FixSelector);
             }
 
-            searchField.RegisterValueChangedCallback(ctx => RefreshList(ctx.newValue, true));
+            searchField.RegisterValueChangedCallback(ctx => RefreshList(ctx.newValue, typeFilter.value, true));
+            typeFilter.RegisterValueChangedCallback(ctx => RefreshList(searchField.value, ctx.newValue, true));
             //mergeRenderersToggle.RegisterValueChangedCallback(ctx => RefreshList(searchField.value, ctx.newValue));
 
             VisualElement container = new();
@@ -305,8 +306,10 @@ namespace Flare.Editor.Windows
             
             list.selectionType = SelectionType.None;
 
-            var previousProperty = _target?.Property(nameof(PropertyInfo.Name)).stringValue;
-            searchField.value = string.IsNullOrWhiteSpace(previousProperty) ? "t:Blendshape " : previousProperty;
+            var previousProperty = property.Property(nameof(AnimationPropertyInfo.Name)).stringValue;
+            var previousContext = property.Property(nameof(AnimationPropertyInfo.ContextType)).stringValue;
+            searchField.value = string.IsNullOrWhiteSpace(previousProperty) ? "" : previousProperty;
+            typeFilter.value = Type.GetType(previousContext);
         }
 
         private void OnLostFocus()
@@ -337,7 +340,7 @@ namespace Flare.Editor.Windows
                 // Can't find another way to do this unfortunately, but if we try to access a property
                 // when the serialized property is destroyed (array element deleted or exited/reselected component,
                 // it will throw once.
-                _ = _target.Property(nameof(PropertyInfo.Path));
+                _ = _target.Property(nameof(AnimationPropertyInfo.Path));
             }
             catch
             {

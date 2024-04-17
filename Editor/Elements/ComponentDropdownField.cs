@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -9,6 +10,8 @@ namespace Flare.Editor.Elements
     // UI Toolkit binding :woozy_face:
     internal class ComponentDropdownField : PopupField<Object>
     {
+        public bool RemoveDuplicateTypes { get; set; } = false;
+
         public ComponentDropdownField(GameObject? gameObject) : base(
             gameObject.AsNullable()?.GetComponents<Component>()?.Select(c => (Object)c).ToList() ?? new List<Object>(0),
             0,
@@ -27,6 +30,29 @@ namespace Flare.Editor.Elements
             
             choices = gameObject.AsNullable()?.GetComponents<Component>()?.Select(c => (Object)c).ToList() ??
                       new List<Object>(0);
+        }
+
+        public void Push(Object[]? targets)
+        {
+            var seenTypes = RemoveDuplicateTypes ? new List<Type>() : null;
+
+            choices = targets.SelectMany(t =>
+            {
+                var gameObject = t as GameObject;
+                if (gameObject is null && t is Component component)
+                    gameObject = component.gameObject;
+
+                return gameObject.AsNullable()?.GetComponents<Component>()?.Select(c => (Object)c) ?? new List<Object>(0);
+            }).Where(t =>
+            {
+                if (!RemoveDuplicateTypes)
+                    return true;
+                var type = t.GetType();
+                if (seenTypes!.Contains(type))
+                    return false;
+                seenTypes!.Add(type);
+                return true;
+            }).ToList();
         }
 
         private static string FormatSelectedComponent(Object component)

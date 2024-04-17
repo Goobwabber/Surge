@@ -3,6 +3,7 @@ using Flare.Editor.Extensions;
 using Flare.Editor.Models;
 using UnityEditor;
 using UnityEditor.UIElements;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Flare.Editor.Elements

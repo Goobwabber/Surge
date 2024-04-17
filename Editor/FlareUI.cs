@@ -31,14 +31,36 @@ namespace Flare.Editor
         public static readonly Color DisabledColor = EditorGUIUtility.isProSkin
             ? new Color32(0xFF, 0x7C, 0x7C, 0xFF) : new Color32(0x93, 0x00, 0x00, 0xFF);
 
+        public static readonly Color TransparentColor = new Color32(0x00, 0x00, 0x00, 0x00);
+
         private static Texture2D? _warningImage;
 
         public static Texture2D GetWarningImage()
         {
             if (_warningImage)
-                return _warningImage;
-            _warningImage = (Texture2D)EditorGUIUtility.IconContent("Warning@2x").image;
+                return _warningImage!;
+            _warningImage = (Texture2D)EditorGUIUtility.IconContent(EditorGUIUtility.isProSkin ? "d_console.warnicon.sml" : "console.warnicon.sml").image;
             return _warningImage;
+        }
+
+        private static Texture2D? _errorImage;
+
+        public static Texture2D GetErrorImage()
+        {
+            if (_errorImage)
+                return _errorImage!;
+            _errorImage = (Texture2D)EditorGUIUtility.IconContent(EditorGUIUtility.isProSkin ? "d_console.erroricon.sml" : "console.erroricon.sml").image;
+            return _errorImage;
+        }
+
+        private static Texture2D? _searchImage;
+
+        public static Texture2D GetSearchImage()
+        {
+            if (_searchImage)
+                return _searchImage!;
+            _searchImage = (Texture2D)EditorGUIUtility.IconContent("Search Icon").image;
+            return _searchImage;
         }
     }
 }

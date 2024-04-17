@@ -13,10 +13,14 @@ namespace Flare.Editor.Elements
         private Label _label;
         private TextElement _value;
 
-        public LabelledEnumField(Enum defaultValue, SerializedProperty property, string label)
+        private Func<int, Color32>? _enumColorFunction;
+        private EventCallback<ChangeEvent<Enum>>? _valueChangedColorCallback;
+
+        public LabelledEnumField(Enum defaultValue, string label, SerializedProperty? property = null)
         {
             _enumField = new EnumField(defaultValue).WithHeight(20f);
-            _enumField.BindProperty(property);
+            if (property is not null)
+                _enumField.BindProperty(property);
             _label = new Label(label).WithPadding(0f).WithMarginTop(1f);
             _value = _enumField.Q<TextElement>();
             _value.parent.Insert(0, _label);
@@ -26,15 +30,31 @@ namespace Flare.Editor.Elements
             Add(_enumField);
         }
 
-        public LabelledEnumField(Enum defaultValue, SerializedProperty property, string label, string tooltip) : this(defaultValue, property, label)
+        public LabelledEnumField(Enum defaultValue, string label, string tooltip, SerializedProperty? property = null) : this(defaultValue, label, property)
         {
             this.tooltip = tooltip;
         }
 
-        public LabelledEnumField(Enum defaultValue, SerializedProperty property, string label, string tooltip, Func<int, Color32> enumColorFunction) : this(defaultValue, property, label, tooltip)
+        public LabelledEnumField(Enum defaultValue, string label, string tooltip, Func<int, Color32> enumColorFunction, SerializedProperty? property = null) : this(defaultValue, label, tooltip, property)
         {
-            _enumField.RegisterValueChangedCallback(evt =>
+            _enumColorFunction = enumColorFunction;
+            if (property is null)
+                return;
+            _value.WithColor(enumColorFunction(property.enumValueIndex));
+            _enumField.RegisterValueChangedCallback(_valueChangedColorCallback = evt =>
                 _value.WithColor(enumColorFunction(property.enumValueIndex)));
+        }
+
+        public void BindProperty(SerializedProperty property)
+        {
+            _enumField.BindProperty(property);
+            if (_enumColorFunction is null)
+                return;
+            if (_valueChangedColorCallback is not null)
+                _enumField.UnregisterValueChangedCallback(_valueChangedColorCallback);
+            _value.WithColor(_enumColorFunction(property.enumValueIndex));
+            _enumField.RegisterValueChangedCallback(_valueChangedColorCallback = evt =>
+                _value.WithColor(_enumColorFunction(property.enumValueIndex)));
         }
 
         public void RegisterValueChangedCallback(EventCallback<ChangeEvent<Enum>> callback)

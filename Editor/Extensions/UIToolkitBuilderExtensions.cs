@@ -191,7 +191,7 @@ namespace Flare.Editor.Extensions
         
         public static T WithShrink<T>(this T element, float shrink) where T : VisualElement
         {
-            element.style.flexGrow = shrink;
+            element.style.flexShrink = shrink;
             return element;
         }
         

@@ -44,7 +44,7 @@ namespace Flare.Editor
         }
         
         public void AddControl(BuildContext context, FlareControl control)
-        {
+        {/*
             _controls.Add(control);
             foreach (var property in control.PropertyGroupCollection.Groups.SelectMany(g => g.Properties))
             {
@@ -60,11 +60,11 @@ namespace Flare.Editor
                     continue;
 
                 _objectPropertyContexts[(property.Path, property.ContextType)] = (ctx as Component)!;
-            }
+            }*/
         }
         
         public void AddControlContext(ControlContext controlContext)
-        {
+        {/*
             var control = controlContext.Control;
             _controlContexts.Add(controlContext);
             
@@ -72,13 +72,13 @@ namespace Flare.Editor
                 && control.MenuItem.IsTagTrigger && !string.IsNullOrWhiteSpace(control.MenuItem.Tag))
             {
                 _triggerControls[controlContext.Id] = controlContext;
-            }
+            }*/
         }
-
+        /*
         public Component? GetPropertyContext(PropertyInfo property)
         {
             return _objectPropertyContexts.GetValueOrDefault((property.Path, property.ContextType));
-        }
+        }*/
 
         public ControlContext? GetTriggerContext(string id)
         {

@@ -5,14 +5,14 @@ using UnityEngine.UIElements;
 
 namespace Flare.Editor.Views
 {
-    internal class PropertyGroupCollectionView : IView
+    internal class AnimationGroupCollectionView : IView
     {
-        [PropertyName(nameof(PropertyGroupCollectionInfo.Groups))]
-        private readonly PropertyGroupView _propertyGroupView = new();
+        [PropertyName(nameof(AnimationGroupCollectionInfo.Groups))]
+        private readonly AnimationGroupView _animationGroupView = new();
 
         public void Build(VisualElement root)
         {
-            _propertyGroupView.Build(root);
+            _animationGroupView.Build(root);
             root.CreateHorizontalSpacer(20f);
         }
     }
