@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Flare.Models;
+using Surge.Models;
 using nadena.dev.ndmf;
 using UnityEditor;
 using UnityEngine;
 using VRC.SDK3.Avatars.ScriptableObjects;
 using Object = UnityEngine.Object;
 /*
-namespace Flare.Editor.Passes
+namespace Surge.Editor.Passes
 {
     internal class MenuizationPass : Pass<MenuizationPass>
     {
@@ -18,7 +18,7 @@ namespace Flare.Editor.Passes
         
         protected override void Execute(BuildContext context)
         {
-            var flare = context.GetState<FlareAvatarContext>();
+            var flare = context.GetState<SurgeAvatarContext>();
             
             var descriptor = context.AvatarDescriptor;
             var expressions = descriptor.expressionsMenu;
@@ -57,10 +57,10 @@ namespace Flare.Editor.Passes
                 };
 
                 // GetComponetsInParent will always be ordered from child -> parent.
-                var menus = ctx.Control.GetComponentsInParent<FlareMenu>();
+                var menus = ctx.Control.GetComponentsInParent<SurgeMenu>();
                 
                 // We reverse it and make a linked list to recursively create submenus as needed.
-                LinkedList<FlareMenu> menuList = new(menus.Reverse());
+                LinkedList<SurgeMenu> menuList = new(menus.Reverse());
 
                 var targetMenu = expressions;
                 var current = menuList.First;
@@ -107,7 +107,7 @@ namespace Flare.Editor.Passes
             
             // We might've added too many controls, so we auto-generate folders.
             ShrinkAndNestFolderization(expressions, context.AssetContainer);
-            RenameFlareSubfolders(expressions);
+            RenameSurgeSubfolders(expressions);
         }
 
         private static void ShrinkAndNestFolderization(VRCExpressionsMenu menu, Object container)
@@ -129,7 +129,7 @@ namespace Flare.Editor.Passes
                 {
                     var subMenu = ScriptableObject.CreateInstance<VRCExpressionsMenu>();
                     subMenu.controls.AddRange(menu.controls.Skip(7)); // Take all controls except first seven.
-                    subMenu.name = "Flare Subfolder";
+                    subMenu.name = "Surge Subfolder";
                     
                     AssetDatabase.AddObjectToAsset(subMenu, container);
                     
@@ -151,7 +151,7 @@ namespace Flare.Editor.Passes
             }
         }
 
-        private static void RenameFlareSubfolders(VRCExpressionsMenu menu)
+        private static void RenameSurgeSubfolders(VRCExpressionsMenu menu)
         {
             // Renames all auto-generated subfolders (which we use a guid to identify them during setup) to "MORE..."
             foreach (var control in menu.controls)
@@ -162,7 +162,7 @@ namespace Flare.Editor.Passes
                 if (control.name == _subId)
                     control.name = "MORE...";
                     
-                RenameFlareSubfolders(control.subMenu);
+                RenameSurgeSubfolders(control.subMenu);
             }
         }
     }

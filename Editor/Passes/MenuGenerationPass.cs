@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using VRC.SDK3.Avatars.ScriptableObjects;
 
-namespace Flare.Editor.Passes
+namespace Surge.Editor.Passes
 {
     internal class MenuGenerationPass : Pass<MenuGenerationPass>
     {
@@ -12,12 +12,12 @@ namespace Flare.Editor.Passes
 
         protected override void Execute(BuildContext context)
         {
-            var flare = context.GetState<FlareAvatarContext>();
+            var flare = context.GetState<SurgeAvatarContext>();
             if (flare.IsEmpty)
                 return;
 
             
-            // Because of the way Flare Folders work, we clone every submenu.
+            // Because of the way Surge Folders work, we clone every submenu.
             var descriptor = context.AvatarDescriptor;
             descriptor.expressionsMenu = Clone(context, descriptor.expressionsMenu, context.AssetContainer);
         }
@@ -31,7 +31,7 @@ namespace Flare.Editor.Passes
             if (!context.IsTemporaryAsset(menu))
             {
                 var newMenu = ScriptableObject.CreateInstance<VRCExpressionsMenu>();
-                newMenu.name = $"[Flare] {menu.name} (Clone)";
+                newMenu.name = $"[Surge] {menu.name} (Clone)";
                 newMenu.controls = menu.controls.Select(old => new VRCExpressionsMenu.Control
                 {
                     icon = old.icon,

@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
-using Flare.Editor.Models;
-using Flare.Models;
+using Surge.Editor.Models;
+using Surge.Models;
 using JetBrains.Annotations;
 
-namespace Flare.Editor
+namespace Surge.Editor
 {
     [PublicAPI]
     internal class ControlContext
@@ -14,11 +14,11 @@ namespace Flare.Editor
 
         public bool IsBinary => Control.MenuItem.Type is MenuItemType.Toggle or MenuItemType.Button;
         
-        public FlareControl Control { get; }
+        public SurgeControl Control { get; }
 
         public IReadOnlyList<AnimatableBinaryProperty> Properties => _properties;
         
-        public ControlContext(string id, FlareControl control)
+        public ControlContext(string id, SurgeControl control)
         {
             Id = id;
             Control = control;

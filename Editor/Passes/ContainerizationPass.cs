@@ -2,15 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Flare.Editor.Models;
-using Flare.Editor.Services;
-using Flare.Models;
+using Surge.Editor.Models;
+using Surge.Editor.Services;
+using Surge.Models;
 using nadena.dev.ndmf;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Pool;
 /*
-namespace Flare.Editor.Passes
+namespace Surge.Editor.Passes
 {
     /// <summary>
     /// Converts control data into corresponding control containers.
@@ -25,7 +25,7 @@ namespace Flare.Editor.Passes
         protected override void Execute(BuildContext context)
         {
             var avatarRoot = context.AvatarRootTransform;
-            var flare = context.GetState<FlareAvatarContext>();
+            var flare = context.GetState<SurgeAvatarContext>();
             
             if (flare.IsEmpty)
                 return;
@@ -48,7 +48,7 @@ namespace Flare.Editor.Passes
             // I'm leaving this here just because...
             //
             //BindingService? exclusiveBinder = null;
-            //ILookup<string, FlareProperty>? exclusiveBindings = null;
+            //ILookup<string, SurgeProperty>? exclusiveBindings = null;
 
             // We don't need the property gathering from the binder, just the value fetcher.
             BindingService binder = new(context.AvatarRootObject, Array.Empty<GameObject>());
@@ -202,7 +202,7 @@ namespace Flare.Editor.Passes
         }
 
         // I needed this to be faster so I couldn't directly use the BindingService to get the properties.
-        private static void BindAnimatablePropertiesFast(FlareAvatarContext flare, BuildContext buildContext, ControlContext controlContext, BindingService binder, PropertyInfo prop)
+        private static void BindAnimatablePropertiesFast(SurgeAvatarContext flare, BuildContext buildContext, ControlContext controlContext, BindingService binder, PropertyInfo prop)
         {
             var type = GetContextType(prop);
             if (type == null)
@@ -217,20 +217,20 @@ namespace Flare.Editor.Passes
             // ReSharper disable once ConvertIfStatementToSwitchStatement
             if (prop.ValueType is PropertyValueType.Float or PropertyValueType.Boolean or PropertyValueType.Integer)
             {
-                FlarePseudoProperty pseudoProperty = new(type, null!, new EditorCurveBinding
+                SurgePseudoProperty pseudoProperty = new(type, null!, new EditorCurveBinding
                 {
                     type = type,
                     path = propertyPath,
                     propertyName = prop.Name
                 });
                 
-                FlareProperty flareProperty = new(
+                SurgeProperty flareProperty = new(
                     prop.Name,
                     propertyPath,
                     type,
                     prop.ValueType,
                     prop.ColorType,
-                    FlarePropertySource.None,
+                    SurgePropertySource.None,
                     null!,
                     pseudoProperty,
                     null
@@ -241,20 +241,20 @@ namespace Flare.Editor.Passes
             else if (prop.ValueType is PropertyValueType.Object)
             {
                 // i really hate using type.gettype, remove this later if we dont need binding type
-                FlarePseudoProperty pseudoProperty = new(Type.GetType(prop.ObjectType), null!, new EditorCurveBinding
+                SurgePseudoProperty pseudoProperty = new(Type.GetType(prop.ObjectType), null!, new EditorCurveBinding
                 {
                     type = type,
                     path = propertyPath,
                     propertyName = prop.Name
                 });
 
-                FlareProperty flareProperty = new(
+                SurgeProperty flareProperty = new(
                     prop.Name,
                     propertyPath,
                     type,
                     prop.ValueType,
                     prop.ColorType,
-                    FlarePropertySource.None,
+                    SurgePropertySource.None,
                     null!,
                     pseudoProperty,
                     null
@@ -264,7 +264,7 @@ namespace Flare.Editor.Passes
             }
             else if (prop.ValueType is PropertyValueType.Vector2 or PropertyValueType.Vector3 or PropertyValueType.Vector4)
             {
-                var pseudoProperties = ListPool<FlarePseudoProperty>.Get();
+                var pseudoProperties = ListPool<SurgePseudoProperty>.Get();
 
                 // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
                 var iter = prop.ValueType switch
@@ -292,7 +292,7 @@ namespace Flare.Editor.Passes
                         _ => throw new ArgumentOutOfRangeException()
                     };
                     
-                    pseudoProperties.Add(new FlarePseudoProperty(
+                    pseudoProperties.Add(new SurgePseudoProperty(
                         typeof(float),
                         null!,
                         new EditorCurveBinding
@@ -304,34 +304,34 @@ namespace Flare.Editor.Passes
                     ));
                 }
                 
-                FlareProperty flareProperty = new(
+                SurgeProperty flareProperty = new(
                     prop.Name,
                     propertyPath,
                     type,
                     prop.ValueType,
                     prop.ColorType,
-                    FlarePropertySource.None,
+                    SurgePropertySource.None,
                     null!,
                     null!,
                     pseudoProperties
                 );
                 
                 BindPropertyToAnimatable(flare, controlContext, binder, prop, flareProperty);
-                ListPool<FlarePseudoProperty>.Release(pseudoProperties);
+                ListPool<SurgePseudoProperty>.Release(pseudoProperties);
             }
         }
 
-        private static string GetId(FlareControl control, FlareAvatarContext flare)
+        private static string GetId(SurgeControl control, SurgeAvatarContext flare)
         {
             var validId = false;
-            var id = $"[Flare] {control.MenuItem.Name}";
+            var id = $"[Surge] {control.MenuItem.Name}";
 
             int run = 0;
             while (!validId)
             {
                 if (control.Type is not ControlType.Menu || string.IsNullOrWhiteSpace(control.MenuItem.Name))
                 {
-                    id = $"[Flare] {Guid.NewGuid()}";
+                    id = $"[Surge] {Guid.NewGuid()}";
                 
                     // ReSharper disable once ConvertIfStatementToSwitchStatement
                     if (control.Type is ControlType.PhysBone)
@@ -384,7 +384,7 @@ namespace Flare.Editor.Passes
             return id;
         }
         
-        private static void BindPropertyToAnimatable(FlareAvatarContext flare, ControlContext controlContext, BindingService binder, PropertyInfo prop, FlareProperty animatable)
+        private static void BindPropertyToAnimatable(SurgeAvatarContext flare, ControlContext controlContext, BindingService binder, PropertyInfo prop, SurgeProperty animatable)
         {
             var path = animatable.Path;
             var type = animatable.ContextType;
@@ -416,7 +416,7 @@ namespace Flare.Editor.Passes
                 }
             }
             
-            void CreateAnimatableProperty(FlarePseudoProperty flarePseudoProperty, object inverseValue, int index)
+            void CreateAnimatableProperty(SurgePseudoProperty flarePseudoProperty, object inverseValue, int index)
             {
                 var name = flarePseudoProperty.Name;
                 var defaultValue = prop.OverrideDefaultValue ? prop.ValueType switch
@@ -446,7 +446,7 @@ namespace Flare.Editor.Passes
 
         }
 
-        private static void TryAssignDefaultToAvatar(FlareAvatarContext flare, object value, Type contextType, PropertyInfo propertyInfo, string propertyName, int index)
+        private static void TryAssignDefaultToAvatar(SurgeAvatarContext flare, object value, Type contextType, PropertyInfo propertyInfo, string propertyName, int index)
         {
             var source = flare.GetPropertyContext(propertyInfo);
             if (source == null)

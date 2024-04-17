@@ -2,7 +2,7 @@
 using UnityEngine;
 using VRC.SDK3.Dynamics.Contact.Components;
 
-namespace Flare.Models
+namespace Surge.Models
 {
     [Serializable]
     internal class ContactInfo

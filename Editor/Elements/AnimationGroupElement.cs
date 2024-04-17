@@ -1,7 +1,7 @@
-﻿using Flare.Editor.Extensions;
-using Flare.Editor.Models;
-using Flare.Editor.Services;
-using Flare.Models;
+﻿using Surge.Editor.Extensions;
+using Surge.Editor.Models;
+using Surge.Editor.Services;
+using Surge.Models;
 using System;
 using System.Linq;
 using UnityEditor;
@@ -9,11 +9,11 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using VRC.SDKBase;
-using AnimationPropertyInfo = Flare.Models.AnimationPropertyInfo;
+using AnimationPropertyInfo = Surge.Models.AnimationPropertyInfo;
 
-namespace Flare.Editor.Elements
+namespace Surge.Editor.Elements
 {
-    internal class AnimationGroupElement : VisualElement, IFlareBindable
+    internal class AnimationGroupElement : VisualElement, ISurgeBindable
     {
         // constants
         private const float labelWidth = 105f;
@@ -39,17 +39,17 @@ namespace Flare.Editor.Elements
         private readonly Label _exclusionsLabel;
         private readonly LabelledEnumField _toggleField;
         private readonly VisualElement _objectsSeparator;
-        private readonly FlareCollectionView<AnimationObjectElement> _objectsField;
+        private readonly SurgeCollectionView<AnimationObjectElement> _objectsField;
         private readonly PaneMenu _paneMenu;
 
         // properties section
         private readonly VisualElement _propertyContainer;
         private readonly Label _propertiesLabel;
         private readonly VisualElement _propertiesSeparator;
-        private readonly FlareCollectionView<AnimationPropertyElement> _propertiesField;
+        private readonly SurgeCollectionView<AnimationPropertyElement> _propertiesField;
 
         // states section
-        private readonly FlareCollectionView<AnimationStateElement> _statesField;
+        private readonly SurgeCollectionView<AnimationStateElement> _statesField;
 
         public AnimationGroupElement()
         {
@@ -64,7 +64,7 @@ namespace Flare.Editor.Elements
             _objectsField.WithGrow(1f);
 
             _objectsSeparator = new VisualElement().WithMargin(0f).WithPadding(0f).WithBorderWidth(0f);
-            _objectsSeparator.WithBorderColor(FlareUI.ButtonBorderColor);
+            _objectsSeparator.WithBorderColor(SurgeUI.ButtonBorderColor);
             _objectsSeparator.style.borderLeftWidth = 2f;
             _objectsSeparator.style.marginLeft = 2f;
 
@@ -84,7 +84,7 @@ namespace Flare.Editor.Elements
 
             _toggleField = new LabelledEnumField(AnimationToggleType.TurnOn, "When Active: ",
                 "Whether to enable these objects or disable them when the menu item is active.",
-                value => value == (int)AnimationToggleType.TurnOff ? FlareUI.DisabledColor : FlareUI.EnabledColor);
+                value => value == (int)AnimationToggleType.TurnOff ? SurgeUI.DisabledColor : SurgeUI.EnabledColor);
             _toggleField.style.width = 160f;
 
             // Create the container for the object picker
@@ -115,7 +115,7 @@ namespace Flare.Editor.Elements
             _propertiesLabel.tooltip = "The properties to be animated.";
 
             _propertiesSeparator = new VisualElement().WithMargin(0f).WithPadding(0f).WithBorderWidth(0f);
-            _propertiesSeparator.WithBorderColor(FlareUI.ButtonBorderColor);
+            _propertiesSeparator.WithBorderColor(SurgeUI.ButtonBorderColor);
             _propertiesSeparator.style.borderLeftWidth = 2f;
             _propertiesSeparator.style.marginLeft = 2f;
 
@@ -141,7 +141,7 @@ namespace Flare.Editor.Elements
             var statesMargin = new VisualElement().WithWidth(15f);
 
             // Create the container for animation states 
-            var statesContainer = this.CreateHorizontal().WithBorderColor(FlareUI.BorderColor);
+            var statesContainer = this.CreateHorizontal().WithBorderColor(SurgeUI.BorderColor);
             statesContainer.Add(_statesField);
             statesContainer.Add(statesMargin);
         }
@@ -181,7 +181,7 @@ namespace Flare.Editor.Elements
             }
 
             // create binding service to search for and validate animation bindings
-            if (property.serializedObject.targetObject is not FlareControl flareControl)
+            if (property.serializedObject.targetObject is not SurgeControl flareControl)
                 return;
             var descriptor = flareControl.GetComponentInParent<VRC_AvatarDescriptor>();
             if (!descriptor)
@@ -249,8 +249,8 @@ namespace Flare.Editor.Elements
                 var moreThanOneProperty = _propertiesProperty.arraySize > 1;
                 _objectsLabel.text = moreThanOneObject ? "Target Objects" : "Target Object";
                 _propertiesLabel.text = moreThanOneProperty ? "Target Properties" : "Target Property";
-                _objectsSeparator.style.borderLeftColor = moreThanOneObject ? FlareUI.ButtonBorderColor : FlareUI.TransparentColor;
-                _propertiesSeparator.style.borderLeftColor = moreThanOneObject ? FlareUI.ButtonBorderColor : FlareUI.TransparentColor;
+                _objectsSeparator.style.borderLeftColor = moreThanOneObject ? SurgeUI.ButtonBorderColor : SurgeUI.TransparentColor;
+                _propertiesSeparator.style.borderLeftColor = moreThanOneObject ? SurgeUI.ButtonBorderColor : SurgeUI.TransparentColor;
                 _propertyContainer.style.marginTop = moreThanOneObject ? 5f : 0f;
                 _statesField.style.marginTop = moreThanOneObject || moreThanOneProperty ? 5f : 0f;
             }

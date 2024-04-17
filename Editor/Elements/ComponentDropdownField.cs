@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 
-namespace Flare.Editor.Elements
+namespace Surge.Editor.Elements
 {
     // UI Toolkit binding :woozy_face:
     internal class ComponentDropdownField : PopupField<Object>

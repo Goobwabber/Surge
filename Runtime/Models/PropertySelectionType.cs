@@ -1,4 +1,4 @@
-﻿namespace Flare.Models
+﻿namespace Surge.Models
 {
     internal enum PropertySelectionType
     {

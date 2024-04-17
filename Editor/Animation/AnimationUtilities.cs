@@ -17,7 +17,7 @@ using UnityEngine;
 using VRC.SDK3.Avatars.Components;
 
 // https://github.com/bdunderscore/modular-avatar/blob/6dcea7fa5eaacc66a3500ab36ddcdbbb52abd836/Editor/Animation/AnimationUtil.cs
-namespace Flare.Editor.Animation
+namespace Surge.Editor.Animation
 {
     internal static class AnimationUtilities
     {
@@ -50,7 +50,7 @@ namespace Flare.Editor.Animation
 
         internal static void CloneAllControllers(BuildContext context)
         {
-            if (context.GetState<FlareAvatarContext>().IsEmpty)
+            if (context.GetState<SurgeAvatarContext>().IsEmpty)
                 return;
             
             // Ensure all of the controllers on the avatar descriptor point to temporary assets.

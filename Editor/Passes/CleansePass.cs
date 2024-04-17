@@ -2,15 +2,15 @@
 using nadena.dev.ndmf;
 using UnityEngine;
 
-namespace Flare.Editor.Passes
+namespace Surge.Editor.Passes
 {
     internal class CleansePass : Pass<CleansePass>
     {
-        public override string DisplayName => "Remove Flare Components";
+        public override string DisplayName => "Remove Surge Components";
 
         protected override void Execute(BuildContext context)
         {
-            var modules = context.AvatarRootObject.GetComponentsInChildren<FlareModule>(true);
+            var modules = context.AvatarRootObject.GetComponentsInChildren<SurgeModule>(true);
             foreach (var module in modules)
             {
                 if (!module || !module.gameObject)
@@ -18,7 +18,7 @@ namespace Flare.Editor.Passes
 
                 // Make sure we don't delete a GameObject with stuff on it
                 var deleteSelf = module.gameObject.GetComponentsInChildren<Component>()
-                    .Any(c => c is not Transform && c is not FlareModule);
+                    .Any(c => c is not Transform && c is not SurgeModule);
                 
                 Object.DestroyImmediate(deleteSelf ? module : module.gameObject);
             }

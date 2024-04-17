@@ -1,19 +1,19 @@
 ﻿using System;
 using System.Linq;
-using Flare.Editor.Elements;
-using Flare.Editor.Extensions;
-using Flare.Editor.Models;
-using Flare.Editor.Services;
-using Flare.Models;
+using Surge.Editor.Elements;
+using Surge.Editor.Extensions;
+using Surge.Editor.Models;
+using Surge.Editor.Services;
+using Surge.Models;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UIElements;
 using VRC.SDKBase;
-using AnimationPropertyInfo = Flare.Models.AnimationPropertyInfo;
+using AnimationPropertyInfo = Surge.Models.AnimationPropertyInfo;
 
-namespace Flare.Editor.Windows
+namespace Surge.Editor.Windows
 {
     internal class PropertySelectorWindow : EditorWindow
     {
@@ -24,7 +24,7 @@ namespace Flare.Editor.Windows
         public static void Present(SerializedProperty property, BindingService bindingService)
         {
             var window = GetWindow<PropertySelectorWindow>();
-            window.titleContent = new GUIContent("Flare Property Selector");
+            window.titleContent = new GUIContent("Surge Property Selector");
             window._target = property;
             window._bindingService = bindingService;
 
@@ -53,7 +53,7 @@ namespace Flare.Editor.Windows
 
         private void CreateSelector(VisualElement root, SerializedProperty property)
         {
-            if (property.serializedObject.targetObject is not FlareControl flareCOntrol)
+            if (property.serializedObject.targetObject is not SurgeControl flareCOntrol)
                 return;
 
             var descriptor = flareCOntrol.GetComponentInParent<VRC_AvatarDescriptor>();
@@ -61,7 +61,7 @@ namespace Flare.Editor.Windows
                 return;
 
             var groupsProperty = property.serializedObject
-                .Property(nameof(FlareControl.AnimationGroupCollection))!;
+                .Property(nameof(SurgeControl.AnimationGroupCollection))!;
 
             // Writing this makes me uncomfortable... Unity Editor dev is pain.
             var propertyGroups = ((AnimationGroupCollectionInfo)groupsProperty.boxedValue).Groups;
@@ -159,7 +159,7 @@ namespace Flare.Editor.Windows
                     SetProperty(pseudoProperty);
                 }
 
-                void SetProperty(FlarePseudoProperty? pseudoProperty = null)
+                void SetProperty(SurgePseudoProperty? pseudoProperty = null)
                 {
                     var propName = pseudoProperty?.Name ?? binding.Name;
                     var type = pseudoProperty is null ? binding.Type : PropertyValueType.Float;
@@ -255,10 +255,10 @@ namespace Flare.Editor.Windows
                         var failedSearch = false;
                         var source = group.Source;
 
-                        if (materialsOnly && source is not FlarePropertySource.Material)
+                        if (materialsOnly && source is not SurgePropertySource.Material)
                             continue;
 
-                        if (blendshapesOnly && source is not FlarePropertySource.Blendshape)
+                        if (blendshapesOnly && source is not SurgePropertySource.Blendshape)
                             continue;
 
                         foreach (var part in searchParts)

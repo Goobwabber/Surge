@@ -1,14 +1,14 @@
-﻿using Flare.Editor.Attributes;
-using Flare.Editor.Extensions;
-using Flare.Models;
+﻿using Surge.Editor.Attributes;
+using Surge.Editor.Extensions;
+using Surge.Models;
 using UnityEditor;
 using UnityEngine.UIElements;
 
-namespace Flare.Editor.Views
+namespace Surge.Editor.Views
 {
     internal class TagInfoView : IView
     {
-        //private const string _helpText = "Tags allow you to trigger many controls at once using a simple rule system. When a tag is enabled or disabled, a rule can be triggered which causes controls of another tag to be activated/deactivated. Create new tags in the Flare Tag Module";
+        //private const string _helpText = "Tags allow you to trigger many controls at once using a simple rule system. When a tag is enabled or disabled, a rule can be triggered which causes controls of another tag to be activated/deactivated. Create new tags in the Surge Tag Module";
 
         [PropertyName(nameof(TagInfo.Module))]
         private readonly SerializedProperty _moduleProperty = null!;
@@ -23,7 +23,7 @@ namespace Flare.Editor.Views
 
             root.CreateButton("Go To Tag Module", () =>
             {
-                var control = (_tagsProperty.serializedObject.targetObject as FlareControl)!;
+                var control = (_tagsProperty.serializedObject.targetObject as SurgeControl)!;
                 if (!control.TagInfo.EnsureValidated(control.gameObject, true))
                     return;
                 

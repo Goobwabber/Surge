@@ -1,8 +1,8 @@
 ﻿using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Flare.Editor")]
+[assembly: InternalsVisibleTo("Surge.Editor")]
 
-namespace Flare
+namespace Surge
 {
     internal class AssemblyInfo
     {

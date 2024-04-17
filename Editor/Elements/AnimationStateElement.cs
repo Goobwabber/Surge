@@ -1,15 +1,15 @@
-﻿using Flare.Editor.Extensions;
-using Flare.Editor.Models;
-using Flare.Models;
+﻿using Surge.Editor.Extensions;
+using Surge.Editor.Models;
+using Surge.Models;
 using System;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Flare.Editor.Elements
+namespace Surge.Editor.Elements
 {
-    internal class AnimationStateElement : VisualElement, IFlareBindable
+    internal class AnimationStateElement : VisualElement, ISurgeBindable
     {
         private SerializedProperty? _menuProperty;
         private SerializedProperty? _valueTypeProperty;
@@ -70,7 +70,7 @@ namespace Flare.Editor.Elements
 
             _toggleField = new LabelledEnumField(ToggleMode.Enabled, "",
                 "The value to set the properties to when the menu is in this state.",
-                value => value == (int)ToggleMode.Disabled ? FlareUI.DisabledColor : FlareUI.EnabledColor);
+                value => value == (int)ToggleMode.Disabled ? SurgeUI.DisabledColor : SurgeUI.EnabledColor);
             _toggleField.WithWidth(75f);
             this.Add(_toggleField);
 

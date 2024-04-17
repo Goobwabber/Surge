@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Linq;
-using Flare.Models;
+using Surge.Models;
 using nadena.dev.ndmf;
 using UnityEditor;
 using UnityEngine;
 using VRC.SDK3.Avatars.ScriptableObjects;
 /*
-namespace Flare.Editor.Passes
+namespace Surge.Editor.Passes
 {
     internal class ParametrizationPass : Pass<ParametrizationPass>
     {
@@ -14,7 +14,7 @@ namespace Flare.Editor.Passes
 
         protected override void Execute(BuildContext context)
         {
-            var flare = context.GetState<FlareAvatarContext>();
+            var flare = context.GetState<SurgeAvatarContext>();
             var descriptor = context.AvatarDescriptor;
             var vrcParams = descriptor.expressionParameters;
             

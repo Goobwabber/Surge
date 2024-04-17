@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using UnityEngine.UIElements;
 
-namespace Flare.Editor.Extensions
+namespace Surge.Editor.Extensions
 {
     internal static class UIToolkitExtensions
     {

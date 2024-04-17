@@ -1,15 +1,15 @@
-﻿using Flare.Editor.Attributes;
-using Flare.Editor.Elements;
-using Flare.Editor.Extensions;
-using Flare.Models;
+﻿using Surge.Editor.Attributes;
+using Surge.Editor.Elements;
+using Surge.Editor.Extensions;
+using Surge.Models;
 using UnityEditor;
 using UnityEngine.UIElements;
 
-namespace Flare.Editor.Views
+namespace Surge.Editor.Views
 {
     internal class AnimationGroupView : IView
     {
-        [PropertyName(nameof(FlareControl.MenuItem))]
+        [PropertyName(nameof(SurgeControl.MenuItem))]
         private readonly SerializedProperty _menuProperty = null!;
 
         [PropertyName("Array")]
@@ -17,7 +17,7 @@ namespace Flare.Editor.Views
 
         public void Build(VisualElement root)
         {
-            FlareCollectionView<AnimationGroupElement> view = new(CreateGroupElement, (e, i) =>
+            SurgeCollectionView<AnimationGroupElement> view = new(CreateGroupElement, (e, i) =>
             {
                 e.SetData(_menuProperty, () =>
                 {
@@ -53,7 +53,7 @@ namespace Flare.Editor.Views
             AnimationGroupElement root = new();
 
             root
-                .WithBorderColor(FlareUI.BorderColor)
+                .WithBorderColor(SurgeUI.BorderColor)
                 .WithBorderRadius(3f)
                 .WithBorderWidth(1f)
                 .WithMarginTop(5f)

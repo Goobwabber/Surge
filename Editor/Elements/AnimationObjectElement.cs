@@ -1,15 +1,15 @@
-﻿using Flare.Editor.Extensions;
-using Flare.Editor.Models;
-using Flare.Models;
+﻿using Surge.Editor.Extensions;
+using Surge.Editor.Models;
+using Surge.Models;
 using System;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Flare.Editor.Elements
+namespace Surge.Editor.Elements
 {
-    internal class AnimationObjectElement : VisualElement, IFlareBindable
+    internal class AnimationObjectElement : VisualElement, ISurgeBindable
     {
         private AnimationGroupType _groupType;
         private bool _onlyArrayItem;

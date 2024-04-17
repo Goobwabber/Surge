@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Flare.Editor.Models
+namespace Surge.Editor.Models
 {
     internal class AnimatableBinaryProperty
     {

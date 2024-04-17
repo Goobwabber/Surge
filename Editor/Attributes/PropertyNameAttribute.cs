@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Flare.Editor.Attributes
+namespace Surge.Editor.Attributes
 {
     [AttributeUsage(AttributeTargets.Field)]
     internal class PropertyNameAttribute : Attribute

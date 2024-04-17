@@ -1,17 +1,17 @@
 {
-  "name": "nexus.auros.flare",
-  "displayName": "Flare",
+  "name": "com.goobwabber.surge",
+  "displayName": "Surge",
   "version": "1.0.0-beta.12",
   "unity": "2022.3",
   "description": "Non-Destructive Avatar Building Tools for VRChat",
   "vrchatVersion": "2023.4.1",
   "author": {
-    "name": "Auros Nexus",
-    "url": "https://github.com/Auros/Flare"
+    "name": "Goobwabber",
+    "url": "https://github.com/goobwabber/surge"
   },
   "vpmDependencies": {
     "com.vrchat.avatars": "^3.5.0",
-    "nexus.auros.sucrose": "^1.0.0-beta.2",
+    "com.goobwabber.sucrose": "^1.0.0-beta.3",
     "nadena.dev.ndmf": "^1.3.0"
   }
 }

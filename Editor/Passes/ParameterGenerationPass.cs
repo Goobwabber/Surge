@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using VRC.SDK3.Avatars.ScriptableObjects;
 
-namespace Flare.Editor.Passes
+namespace Surge.Editor.Passes
 {
     internal class ParameterGenerationPass : Pass<ParameterGenerationPass>
     {
@@ -12,7 +12,7 @@ namespace Flare.Editor.Passes
 
         protected override void Execute(BuildContext context)
         {
-            var flare = context.GetState<FlareAvatarContext>();
+            var flare = context.GetState<SurgeAvatarContext>();
             
             // Generate temporary parameter object.
             var descriptor = context.AvatarDescriptor;
@@ -26,7 +26,7 @@ namespace Flare.Editor.Passes
                 return;
             
             var newParams = ScriptableObject.CreateInstance<VRCExpressionParameters>();
-            newParams.name = "[Flare] Expression Parameters";
+            newParams.name = "[Surge] Expression Parameters";
             newParams.parameters = vrcParams.parameters.Select(p => new VRCExpressionParameters.Parameter
             {
                 name = p.name,

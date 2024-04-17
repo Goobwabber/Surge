@@ -1,14 +1,14 @@
 ﻿using UnityEditor;
 
-namespace Flare.Editor.Controllers
+namespace Surge.Editor.Controllers
 {
     [InitializeOnLoad]
     internal class EditorControllerManager
     {
         static EditorControllerManager()
         {
-            EditorControllers.Add(new FlareMenuSync());
-            EditorControllers.Add(new FlareControlSync());
+            EditorControllers.Add(new SurgeMenuSync());
+            EditorControllers.Add(new SurgeControlSync());
             EditorApplication.update += Update;
         }
 

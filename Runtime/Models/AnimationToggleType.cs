@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Flare.Models
+namespace Surge.Models
 {
     internal enum AnimationToggleType
     {

@@ -1,18 +1,18 @@
-﻿using Flare.Editor.Extensions;
-using Flare.Editor.Models;
-using Flare.Editor.Services;
-using Flare.Editor.Windows;
-using Flare.Models;
+﻿using Surge.Editor.Extensions;
+using Surge.Editor.Models;
+using Surge.Editor.Services;
+using Surge.Editor.Windows;
+using Surge.Models;
 using System;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
-using AnimationPropertyInfo = Flare.Models.AnimationPropertyInfo;
+using AnimationPropertyInfo = Surge.Models.AnimationPropertyInfo;
 
-namespace Flare.Editor.Elements
+namespace Surge.Editor.Elements
 {
-    internal class AnimationPropertyElement : VisualElement, IFlareBindable
+    internal class AnimationPropertyElement : VisualElement, ISurgeBindable
     {
         // properties
         private SerializedProperty? _nameProperty;
@@ -75,11 +75,11 @@ namespace Flare.Editor.Elements
             _issueIndicator = new VisualElement().WithMargin(2f).WithWidth(15f).WithHeight(14f);
             _issueIndicator.style.marginTop = 3f;
             _issueIndicator.style.marginRight = -2f;
-            _issueIndicator.style.backgroundImage = FlareUI.GetErrorImage();
+            _issueIndicator.style.backgroundImage = SurgeUI.GetErrorImage();
             nameInputBox.Insert(0, _issueIndicator);
 
             _searchButton = nameInputBox.CreateButton(string.Empty).WithWidth(18f).WithHeight(18f).WithMargin(0f).WithBorderRadius(0f);
-            _searchButton.style.backgroundImage = FlareUI.GetSearchImage();
+            _searchButton.style.backgroundImage = SurgeUI.GetSearchImage();
             _searchButton.AddToClassList(ObjectField.selectorUssClassName);
 
             _addButton = this.CreateButton("+").WithHeight(20f).WithWidth(20f).WithFontSize(18f).WithFontStyle(FontStyle.Bold);
@@ -231,9 +231,9 @@ namespace Flare.Editor.Elements
 
             var contextType = _componentField.value;
             // TODO: make asynchronous :plead:
-            if (!_bindingService.TryGetPropertyBinding(contextType, name, out FlareProperty binding))
+            if (!_bindingService.TryGetPropertyBinding(contextType, name, out SurgeProperty binding))
             {
-                _issueIndicator.style.backgroundImage = FlareUI.GetWarningImage();
+                _issueIndicator.style.backgroundImage = SurgeUI.GetWarningImage();
                 _issueIndicator.Visible(true);
                 _propertyTypeLabel.Visible(false);
                 _issueIndicator.tooltip = $"Animatable property with name \"{name}\" not found on any components of type \"{contextType.Name}\".";
@@ -266,7 +266,7 @@ namespace Flare.Editor.Elements
                 var sharedColorType = (PropertyColorType)_sharedColorTypeProperty.enumValueIndex;
                 var sharedObjectType = _sharedObjectTypeProperty.stringValue;
                 var sharedTypeName = GetPropertyTypeName(sharedValueType, sharedColorType, sharedObjectType);
-                _issueIndicator.style.backgroundImage = FlareUI.GetErrorImage();
+                _issueIndicator.style.backgroundImage = SurgeUI.GetErrorImage();
                 _propertyTypeLabel.Visible(true);
                 _issueIndicator.Visible(true);
                 _issueIndicator.tooltip = $"Property has value type \"{typeName}\" which does not match the first property value's type, \"{sharedTypeName}\".";

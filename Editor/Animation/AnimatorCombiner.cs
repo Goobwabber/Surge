@@ -33,7 +33,7 @@ using VRC.SDK3.Avatars.Components;
 using VRC.SDKBase;
 using Object = UnityEngine.Object;
 
-namespace Flare.Editor.Animation
+namespace Surge.Editor.Animation
 {
     internal class AnimatorCombiner
     {

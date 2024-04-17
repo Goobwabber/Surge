@@ -1,10 +1,10 @@
-﻿using Flare.Editor.Attributes;
-using Flare.Editor.Extensions;
-using Flare.Models;
+﻿using Surge.Editor.Attributes;
+using Surge.Editor.Extensions;
+using Surge.Models;
 using UnityEditor;
 using UnityEngine.UIElements;
 
-namespace Flare.Editor.Views
+namespace Surge.Editor.Views
 {
     internal class PhysBoneControlView : IView
     {

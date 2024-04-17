@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Flare.Editor.Models;
-using Flare.Models;
+using Surge.Editor.Models;
+using Surge.Models;
 using UnityEditor;
 using UnityEngine;
 using VRC.SDKBase;
 
-namespace Flare.Editor.Services
+namespace Surge.Editor.Services
 {
     internal class BindingService
     {
@@ -18,8 +18,8 @@ namespace Flare.Editor.Services
 
         private GameObject?[] _gameObjects;
         private GameObject?[] _searchableObjects = Array.Empty<GameObject>();
-        private IEnumerable<FlareProperty> _properties = Array.Empty<FlareProperty>();
-        private Dictionary<string, FlareProperty> _validatedBindings = new Dictionary<string, FlareProperty>();
+        private IEnumerable<SurgeProperty> _properties = Array.Empty<SurgeProperty>();
+        private Dictionary<string, SurgeProperty> _validatedBindings = new Dictionary<string, SurgeProperty>();
 
         private bool _invalidObjects = true;
         private bool _invalidProperties = true;
@@ -51,32 +51,32 @@ namespace Flare.Editor.Services
             _gameObjectSearch = true;
         }
 
-        public T GetPropertyValue<T>(FlareProperty property)
+        public T GetPropertyValue<T>(SurgeProperty property)
         {
             return (T)GetPropertyValue(property);
         }
 
-        public object GetPropertyValue(FlarePseudoProperty property)
+        public object GetPropertyValue(SurgePseudoProperty property)
         {
             _ = AnimationUtility.GetFloatValue(_root, property.Binding, out var pseudoDefault);
             return pseudoDefault;
         }
 
-        public object GetPropertyValue(FlareProperty property)
+        public object GetPropertyValue(SurgeProperty property)
         {
-            float GetFloatValue(FlareProperty prop)
+            float GetFloatValue(SurgeProperty prop)
             {
                 _ = AnimationUtility.GetFloatValue(_root, prop.GetPseudoProperty(0).Binding, out var value);
                 return value;
             }
             
-            int GetIntValue(FlareProperty prop)
+            int GetIntValue(SurgeProperty prop)
             {
                 _ = AnimationUtility.GetDiscreteIntValue(_root, prop.GetPseudoProperty(0).Binding, out var value);
                 return value;
             }
 
-            Vector4 GetVectorValue(FlareProperty prop)
+            Vector4 GetVectorValue(SurgeProperty prop)
             {
                 if (prop.Color is PropertyColorType.HDR)
                     _ = true;
@@ -90,7 +90,7 @@ namespace Flare.Editor.Services
                 return value;
             }
 
-            UnityEngine.Object GetObjectValue(FlareProperty prop)
+            UnityEngine.Object GetObjectValue(SurgeProperty prop)
             {
                 _ = AnimationUtility.GetObjectReferenceValue(_root, prop.GetPseudoProperty(0).Binding, out var objectValue);
                 return objectValue;
@@ -166,7 +166,7 @@ namespace Flare.Editor.Services
             return true;
         }
 
-        public bool TryGetPropertyBinding(Type? contextType, string name, out FlareProperty? value)
+        public bool TryGetPropertyBinding(Type? contextType, string name, out SurgeProperty? value)
         {
             value = null;
             if (contextType == null)
@@ -189,14 +189,14 @@ namespace Flare.Editor.Services
             return false;
         }
 
-        public IEnumerable<FlareProperty> GetPropertyBindings(AnimationPropertyInfo[]? preSearch = null, bool pathMatch = true)
+        public IEnumerable<SurgeProperty> GetPropertyBindings(AnimationPropertyInfo[]? preSearch = null, bool pathMatch = true)
         {
             if (!_invalidProperties && preSearch == null)
                 return _properties;
             _invalidProperties = false;
 
             if (!TryGetSearchableObjects(out GameObject?[] objectsToSearch))
-                return _properties = Array.Empty<FlareProperty>(); // is passing the reference for the actual list ok? probably for now
+                return _properties = Array.Empty<SurgeProperty>(); // is passing the reference for the actual list ok? probably for now
 
             var pseudoProperties = objectsToSearch.SelectMany(obj =>
             {
@@ -214,7 +214,7 @@ namespace Flare.Editor.Services
                         return null;
 
                     if (preSearch == null)
-                        return new FlarePseudoProperty(type, obj, binding);
+                        return new SurgePseudoProperty(type, obj, binding);
 
                     bool exists = false;
                     foreach (var pre in preSearch)
@@ -238,7 +238,7 @@ namespace Flare.Editor.Services
                         break;
                     }
 
-                    return !exists ? null : new FlarePseudoProperty(type, obj, binding);
+                    return !exists ? null : new SurgePseudoProperty(type, obj, binding);
                 });
             }).Where(property => property is not null).Select(property => property!).ToArray();
 
@@ -263,7 +263,7 @@ namespace Flare.Editor.Services
                     return lastCharacter is 'r' or 'x';
                 });
 
-            List<FlareProperty> properties = new();
+            List<SurgeProperty> properties = new();
 
             foreach (var potential in potentialMultiProperties)
             {
@@ -302,7 +302,7 @@ namespace Flare.Editor.Services
 
                 var propsToInclude = new[] { potential, second, third, fourth }.Where(p => p != null);
 
-                FlareProperty property = new(
+                SurgeProperty property = new(
                     baseName,
                     potential.Path,
                     potential.ContextType,
@@ -343,7 +343,7 @@ namespace Flare.Editor.Services
                 else
                     propertyType = PropertyValueType.Boolean;
 
-                FlareProperty property = new(
+                SurgeProperty property = new(
                     pseudoProperty.Name,
                     pseudoProperty.Path,
                     pseudoProperty.ContextType,
@@ -363,18 +363,18 @@ namespace Flare.Editor.Services
             return properties;
         }
 
-        private static FlarePropertySource GetSource(FlarePseudoProperty pseudoProperty)
+        private static SurgePropertySource GetSource(SurgePseudoProperty pseudoProperty)
         {
             var name = pseudoProperty.Name;
             var context = pseudoProperty.ContextType;
             
             if (typeof(SkinnedMeshRenderer).IsAssignableFrom(context) && name.StartsWith("blendShape."))
-                return FlarePropertySource.Blendshape;
+                return SurgePropertySource.Blendshape;
             
             if (typeof(Renderer).IsAssignableFrom(context) && name.StartsWith("material."))
-                return FlarePropertySource.Material;
+                return SurgePropertySource.Material;
 
-            return FlarePropertySource.None;
+            return SurgePropertySource.None;
         }
     }
 }

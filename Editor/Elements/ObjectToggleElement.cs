@@ -1,13 +1,13 @@
 ﻿using System;
-using Flare.Editor.Extensions;
-using Flare.Models;
+using Surge.Editor.Extensions;
+using Surge.Models;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 
-namespace Flare.Editor.Elements
+namespace Surge.Editor.Elements
 {
     internal class ObjectToggleElement : VisualElement
     {
@@ -134,8 +134,8 @@ namespace Flare.Editor.Elements
         private static void OnModeFieldChanged(EnumField field, ToggleMode value)
         {
             // Color the enum dropdown text according to the value of the toggle mode.
-            var enabledColor = FlareUI.EnabledColor;
-            var disabledColor = FlareUI.DisabledColor;
+            var enabledColor = SurgeUI.EnabledColor;
+            var disabledColor = SurgeUI.DisabledColor;
             
             var targetColor = (int)value is 0 ? disabledColor : enabledColor;
             

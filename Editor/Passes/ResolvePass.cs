@@ -3,20 +3,20 @@ using nadena.dev.ndmf;
 using UnityEngine;
 using UnityEngine.Pool;
 
-namespace Flare.Editor.Passes
+namespace Surge.Editor.Passes
 {
     /// <summary>
-    /// This pass sets up the FlareAvatarContext and provides the initial values.
+    /// This pass sets up the SurgeAvatarContext and provides the initial values.
     /// </summary>
     internal class ResolvePass : Pass<ResolvePass>
     {
-        public override string DisplayName => "Collect Flare Modules";
+        public override string DisplayName => "Collect Surge Modules";
 
         protected override void Execute(BuildContext context)
         {
             var root = context.AvatarRootObject;
-            var flare = context.GetState<FlareAvatarContext>();
-            var modules = root.GetComponentsInChildren<FlareModule>();
+            var flare = context.GetState<SurgeAvatarContext>();
+            var modules = root.GetComponentsInChildren<SurgeModule>();
 
             foreach (var module in modules)
             {
@@ -26,7 +26,7 @@ namespace Flare.Editor.Passes
                 
                 switch (module)
                 {
-                    case FlareControl control:                
+                    case SurgeControl control:                
                         // Disqualify controls with objects references not on the avatar or other errors.
                         // We use the error reporter designed for the UI.
                         var errors = ListPool<Object?>.Get();
@@ -42,11 +42,11 @@ namespace Flare.Editor.Passes
                         
                         break;
                     
-                    case FlareTags tags:
+                    case SurgeTags tags:
                         flare.AddTags(tags);
                         break;
                     
-                    case FlareSettings settings:
+                    case SurgeSettings settings:
                         flare.PreferredWriteDefaults = settings.WriteDefaults;
                         break;
                 }

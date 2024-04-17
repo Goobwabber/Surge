@@ -1,4 +1,4 @@
-﻿using Flare.Models;
+﻿using Surge.Models;
 using nadena.dev.ndmf;
 using Sucrose;
 using Sucrose.Animation;
@@ -6,7 +6,7 @@ using UnityEditor.Animations;
 using UnityEngine;
 using Random = System.Random;
 /*
-namespace Flare.Editor.Passes
+namespace Surge.Editor.Passes
 {
     internal class ControlPass : Pass<ControlPass>
     {
@@ -16,7 +16,7 @@ namespace Flare.Editor.Passes
 
         protected override void Execute(BuildContext context)
         {
-            var flare = context.GetState<FlareAvatarContext>();
+            var flare = context.GetState<SurgeAvatarContext>();
             
             if (flare.IsEmpty)
                 return;

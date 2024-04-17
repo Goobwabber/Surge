@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-namespace Flare.Editor.Extensions
+namespace Surge.Editor.Extensions
 {
     /* MIT License
 

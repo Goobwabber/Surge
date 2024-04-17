@@ -1,6 +1,6 @@
 ﻿using UnityEngine.UIElements;
 
-namespace Flare.Editor.Views
+namespace Surge.Editor.Views
 {
     internal interface IView
     {

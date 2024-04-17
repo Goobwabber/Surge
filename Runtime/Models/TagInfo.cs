@@ -2,16 +2,16 @@
 using UnityEngine;
 using VRC.SDKBase;
 
-namespace Flare.Models
+namespace Surge.Models
 {
     [Serializable]
     internal class TagInfo
     {
         [field: SerializeField]
-        public FlareTags? Module { get; private set; }
+        public SurgeTags? Module { get; private set; }
         
         [field: SerializeField]
-        public FlareTag[] Tags { get; private set; } = Array.Empty<FlareTag>();
+        public SurgeTag[] Tags { get; private set; } = Array.Empty<SurgeTag>();
 
         public bool EnsureValidated(GameObject gameObject, bool skipLengthCheck = false)
         {
@@ -22,13 +22,13 @@ namespace Flare.Models
             if (!descriptor)
                 return false;
 
-            var layerModule = descriptor.GetComponentInChildren<FlareTags>();
+            var layerModule = descriptor.GetComponentInChildren<SurgeTags>();
             if (layerModule)
                 return true;
 
-            GameObject module = new("Flare Tag Module");
+            GameObject module = new("Surge Tag Module");
             module.transform.SetParent(descriptor.transform);
-            Module = module.AddComponent<FlareTags>();
+            Module = module.AddComponent<SurgeTags>();
             
             var moduleTransform = module.transform;
             moduleTransform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);

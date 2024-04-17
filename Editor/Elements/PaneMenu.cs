@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Flare.Editor.Elements
+namespace Surge.Editor.Elements
 {
     internal class PaneMenu : VisualElement
     {

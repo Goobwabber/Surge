@@ -2,7 +2,7 @@
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace Flare.Models
+namespace Surge.Models
 {
     [Serializable]
     internal class ObjectToggleInfo

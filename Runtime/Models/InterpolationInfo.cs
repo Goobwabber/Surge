@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Flare.Models
+namespace Surge.Models
 {
     [Serializable]
     internal class InterpolationInfo

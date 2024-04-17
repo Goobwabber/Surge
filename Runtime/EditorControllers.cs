@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Flare
+namespace Surge
 {
     internal static class EditorControllers
     {

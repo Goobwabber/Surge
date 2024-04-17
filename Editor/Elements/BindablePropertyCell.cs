@@ -1,13 +1,13 @@
 ﻿using System;
-using Flare.Editor.Extensions;
-using Flare.Editor.Models;
-using Flare.Models;
+using Surge.Editor.Extensions;
+using Surge.Editor.Models;
+using Surge.Models;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Flare.Editor.Elements
+namespace Surge.Editor.Elements
 {
     internal class BindablePropertyCell : VisualElement
     {
@@ -60,7 +60,7 @@ namespace Flare.Editor.Elements
             rightTop.style.flexShrink = 1f;
             
             _propertyNameLabel = leftSide.CreateLabel();
-            _propertyContextLabel = leftSide.CreateFlareLabel().WithFontSize(8f);
+            _propertyContextLabel = leftSide.CreateSurgeLabel().WithFontSize(8f);
 
             //_propertyTypeText = rightTop.CreateLabel();
             _textField = new TextField();
@@ -136,7 +136,7 @@ namespace Flare.Editor.Elements
             }
         }
 
-        public void SetData(FlareProperty property, object currentValue, Action onSelect, Action? onJump,
+        public void SetData(SurgeProperty property, object currentValue, Action onSelect, Action? onJump,
             Action? onVectorX, Action? onVectorY, Action? onVectorZ, Action? onVectorW, bool includePath)
         {
             _propertyNameLabel.text = $"<b>{property.Name}</b>";

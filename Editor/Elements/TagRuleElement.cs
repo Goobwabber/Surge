@@ -1,17 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Flare.Editor.Extensions;
-using Flare.Editor.Models;
-using Flare.Models;
+using Surge.Editor.Extensions;
+using Surge.Editor.Models;
+using Surge.Models;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Flare.Editor.Elements
+namespace Surge.Editor.Elements
 {
-    internal class TagRuleElement : VisualElement, IFlareBindable
+    internal class TagRuleElement : VisualElement, ISurgeBindable
     {
         private readonly PaneMenu _paneMenu;
         private readonly EnumField _causeStateField;
@@ -97,13 +97,13 @@ namespace Flare.Editor.Elements
             _causeTagDropdown.Unbind();
             _effectTagDropdown.Unbind();
             
-            var causeStateProperty = property.Property(nameof(FlareRule.CauseState));
-            var effectStateProperty = property.Property(nameof(FlareRule.EffectState));
+            var causeStateProperty = property.Property(nameof(SurgeRule.CauseState));
+            var effectStateProperty = property.Property(nameof(SurgeRule.EffectState));
 
             _causeStateField.BindProperty(causeStateProperty);
             _effectStateField.BindProperty(effectStateProperty);
-            _causeTagDropdown.BindProperty(property.Property(nameof(FlareRule.CauseLayer)));
-            _effectTagDropdown.BindProperty(property.Property(nameof(FlareRule.EffectLayer)));
+            _causeTagDropdown.BindProperty(property.Property(nameof(SurgeRule.CauseLayer)));
+            _effectTagDropdown.BindProperty(property.Property(nameof(SurgeRule.EffectLayer)));
             
             OnModeFieldChanged(_causeStateField, (ToggleMode)causeStateProperty.enumValueIndex);
             OnModeFieldChanged(_effectStateField, (ToggleMode)effectStateProperty.enumValueIndex);
@@ -127,8 +127,8 @@ namespace Flare.Editor.Elements
         private static void OnModeFieldChanged(EnumField field, ToggleMode value)
         {
             // Color the enum dropdown text according to the value of the toggle mode.
-            var enabledColor = FlareUI.EnabledColor;
-            var disabledColor = FlareUI.DisabledColor;
+            var enabledColor = SurgeUI.EnabledColor;
+            var disabledColor = SurgeUI.DisabledColor;
             
             var targetColor = value is ToggleMode.Enabled ? enabledColor : disabledColor;
             

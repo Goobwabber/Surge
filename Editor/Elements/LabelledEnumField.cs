@@ -1,11 +1,11 @@
-﻿using Flare.Editor.Extensions;
+﻿using Surge.Editor.Extensions;
 using System;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Flare.Editor.Elements
+namespace Surge.Editor.Elements
 {
     internal class LabelledEnumField : VisualElement
     {
@@ -24,7 +24,7 @@ namespace Flare.Editor.Elements
             _label = new Label(label).WithPadding(0f).WithMarginTop(1f);
             _value = _enumField.Q<TextElement>();
             _value.parent.Insert(0, _label);
-            _value.WithColor(FlareUI.FullColor);
+            _value.WithColor(SurgeUI.FullColor);
             _enumField.style.marginRight = 1f;
             _enumField.style.marginLeft = 2f;
             Add(_enumField);

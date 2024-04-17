@@ -1,10 +1,10 @@
-﻿using Flare.Editor.Extensions;
+﻿using Surge.Editor.Extensions;
 using System.Runtime.InteropServices;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Flare.Editor.Elements
+namespace Surge.Editor.Elements
 {
     internal class SettingLabelElement : VisualElement
     {
@@ -15,10 +15,10 @@ namespace Flare.Editor.Elements
 
         public SettingLabelElement(string labelText, float height = 20f)
         {
-            this.WithHeight(height).WithFontSize(12f).WithTextAlign(TextAnchor.MiddleLeft).WithBorderWidth(1f).WithColor(FlareUI.ButtonColor)
-            .WithBackgroundColor(FlareUI.ButtonBackgroundColor).WithBorderColor(FlareUI.ButtonBorderColor).WithBorderRadius(3f);
-            style.borderBottomColor = FlareUI.ButtonBorder2Color;
-            style.borderRightColor = FlareUI.ButtonBorder2Color;
+            this.WithHeight(height).WithFontSize(12f).WithTextAlign(TextAnchor.MiddleLeft).WithBorderWidth(1f).WithColor(SurgeUI.ButtonColor)
+            .WithBackgroundColor(SurgeUI.ButtonBackgroundColor).WithBorderColor(SurgeUI.ButtonBorderColor).WithBorderRadius(3f);
+            style.borderBottomColor = SurgeUI.ButtonBorder2Color;
+            style.borderRightColor = SurgeUI.ButtonBorder2Color;
             style.paddingTop = 1f;
             style.paddingBottom = 1f;
             style.paddingLeft = 4f;

@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
-using Flare.Editor.Elements;
+using Surge.Editor.Elements;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Flare.Editor.Extensions
+namespace Surge.Editor.Extensions
 {
     /// <summary>
     /// Builder-syntax for UI toolkit items for a more declarative UI building style
@@ -59,9 +59,9 @@ namespace Flare.Editor.Extensions
             return label;
         }
         
-        public static Label CreateFlareLabel(this VisualElement element, string text = "")
+        public static Label CreateSurgeLabel(this VisualElement element, string text = "")
         {
-            FlareLabel label = new(text);
+            SurgeLabel label = new(text);
             element.Add(label);
             return label;
         }

@@ -1,12 +1,12 @@
-﻿using Flare.Editor.Attributes;
-using Flare.Editor.Elements;
-using Flare.Editor.Extensions;
-using Flare.Models;
+﻿using Surge.Editor.Attributes;
+using Surge.Editor.Elements;
+using Surge.Editor.Extensions;
+using Surge.Models;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Flare.Editor.Views
+namespace Surge.Editor.Views
 {
     internal class MenuItemControlView : IView
     {
@@ -51,11 +51,11 @@ namespace Flare.Editor.Views
             // Path
             var topHorizontal = root.CreateHorizontal();
 
-            var parentFlareMenu = _pathProperty.serializedObject.targetObject is GameObject go ? go.GetComponentInParent<FlareMenu>() : null;
-            var pathFieldTooltip = parentFlareMenu is not null ?
+            var parentSurgeMenu = _pathProperty.serializedObject.targetObject is GameObject go ? go.GetComponentInParent<SurgeMenu>() : null;
+            var pathFieldTooltip = parentSurgeMenu is not null ?
                 "The name of the menu item, used for generating the parameter name and the display in the hand menu." :
                 "The path of the menu item, used for generating the parameter name and the display in the hand menu. Use '/' to place something in a submenu.";
-            var pathField = topHorizontal.CreatePropertyField(_pathProperty).WithGrow(1f).WithLabel(parentFlareMenu is not null ? "Menu Name" : "Menu Path").WithTooltip(pathFieldTooltip);
+            var pathField = topHorizontal.CreatePropertyField(_pathProperty).WithGrow(1f).WithLabel(parentSurgeMenu is not null ? "Menu Name" : "Menu Path").WithTooltip(pathFieldTooltip);
 
             foreach (var element in pathField.Children())
                 Debug.Log(element.name);
@@ -96,7 +96,7 @@ namespace Flare.Editor.Views
             // Settingbar Default (Toggle)
             var defaultField = new LabelledEnumField((ToggleMenuState)_defaultStateProperty.enumValueIndex, "Default: ",
                 "Is this menu item ON or OFF by default?",
-                value => value == (int)ToggleMenuState.Inactive ? FlareUI.DisabledColor : FlareUI.EnabledColor,
+                value => value == (int)ToggleMenuState.Inactive ? SurgeUI.DisabledColor : SurgeUI.EnabledColor,
                 _defaultStateProperty);
             settingHorizontal.Add(defaultField);
 
@@ -115,7 +115,7 @@ namespace Flare.Editor.Views
             var iconLabel = new SettingLabelElement("Icon", "This control uses a custom icon.");
             settingHorizontal.Add(iconLabel);
             // Settingbar Apply To Avatar
-            var applyAvatarLabel = new SettingLabelElement("Apply To Avatar", "(BETA) This control will assign its default values to the avatar on upload.", FlareUI.GetWarningImage());
+            var applyAvatarLabel = new SettingLabelElement("Apply To Avatar", "(BETA) This control will assign its default values to the avatar on upload.", SurgeUI.GetWarningImage());
             settingHorizontal.Add(applyAvatarLabel);
             // Settingbar Duration
             var interpolationLabel = new SettingLabelElement("Interpolation", "Smooths between animation states rather than being instant.");

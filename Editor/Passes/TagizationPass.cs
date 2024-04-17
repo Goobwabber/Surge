@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Flare.Models;
+using Surge.Models;
 using nadena.dev.ndmf;
 using Sucrose;
 using Sucrose.Animation;
@@ -10,7 +10,7 @@ using VRC.SDK3.Avatars.Components;
 using VRC.SDKBase;
 using Object = UnityEngine.Object;
 /*
-namespace Flare.Editor.Passes
+namespace Surge.Editor.Passes
 {
     internal class TagizationPass : Pass<TagizationPass>
     {
@@ -18,7 +18,7 @@ namespace Flare.Editor.Passes
 
         protected override void Execute(BuildContext context)
         {
-            var flare = context.GetState<FlareAvatarContext>();
+            var flare = context.GetState<SurgeAvatarContext>();
             
             if (flare.IsEmpty)
                 return;
@@ -26,11 +26,11 @@ namespace Flare.Editor.Passes
             var sucrose = flare.GetSucrose(context);
 
             // Create a dummy object because according to Kayla empty animations cause issues with WD OFF
-            GameObject dummyObject = new("[Flare] Dummy Object (Ignore)"); // surely no one will name there thing this
+            GameObject dummyObject = new("[Surge] Dummy Object (Ignore)"); // surely no one will name there thing this
             dummyObject.transform.SetParent(context.AvatarRootTransform);
             var emptyAnimation = sucrose.NewAnimation(builder =>
             {
-                builder.WithName("[Flare] Dummy Animation for Tag Driver");
+                builder.WithName("[Surge] Dummy Animation for Tag Driver");
                 builder.WithBinaryCurve<GameObject>("m_IsActive", 0, 1);
             });
             Object.DestroyImmediate(dummyObject);
@@ -49,7 +49,7 @@ namespace Flare.Editor.Passes
                 
                 tagDriverParameters.Add(tag, sucrose.NewParameter()
                     .WithType(SucroseParameterType.Float)
-                    .WithName($"[Flare Tags] {tag}")
+                    .WithName($"[Surge Tags] {tag}")
                 );
             }
             
@@ -66,7 +66,7 @@ namespace Flare.Editor.Passes
                 }
             }
 
-            var tagDriverLayer = sucrose.NewLayer().WithName("[Flare] Tag Driver");
+            var tagDriverLayer = sucrose.NewLayer().WithName("[Surge] Tag Driver");
             var tagDriverDefaultState = tagDriverLayer.NewState()
                 .WithName("Default")
                 .WithMotion(emptyAnimation)
@@ -108,7 +108,7 @@ namespace Flare.Editor.Passes
 
                     triggeringParameter ??= sucrose.NewParameter()
                         .WithType(SucroseParameterType.Float)
-                        .WithName("[Flare Tags] Triggering");
+                        .WithName("[Surge Tags] Triggering");
                     
                     triggerOnParamDriver.parameters.Add(new VRC_AvatarParameterDriver.Parameter
                     {
