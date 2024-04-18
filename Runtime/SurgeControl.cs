@@ -26,6 +26,15 @@ namespace Surge
             // TODO
             //foreach (var toggle in ObjectToggleCollection.Toggles)
             //    toggle.EnsureValidated();
+
+            EditorControllers.Get<ISurgeModuleHandler<SurgeControl>>(nameof(SurgeControl)).Add(this);
+
+            // Only update the name if synchronization is on
+            // and if the names aren't matching.
+            if (!Settings.SynchronizeName || name == MenuItem.Path)
+                return;
+
+            SetName(name);
         }
 
         public void GetReferencesNotOnAvatar(ICollection<Object?> references)
@@ -56,7 +65,10 @@ namespace Surge
             if (gameObject.GetComponentInParent<SurgeMenu>(true) is null)
                 return;
 
-            name = newName;
+            if (!string.IsNullOrEmpty(newName))
+                name = newName;
+            else
+                name = " ";
             MenuItem.Path = newName;
         }
 

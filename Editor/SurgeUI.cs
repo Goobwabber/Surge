@@ -8,6 +8,8 @@ namespace Surge.Editor
         public static readonly Color FullColor = EditorGUIUtility.isProSkin
             ? new Color(0xFF, 0xFF, 0xFF, 0xFF) : new Color32(0x00, 0x00, 0x00, 0xFF);
 
+        public static readonly Color UneditableColor = new Color32(0x7F, 0x7F, 0x7F, 0xFF);
+
         public static readonly Color BorderColor = new Color32(0x1A, 0x1A, 0x1A, 0xFF);
         
         public static readonly Color BackgroundColor = EditorGUIUtility.isProSkin

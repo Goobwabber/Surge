@@ -21,8 +21,7 @@ namespace Surge.Models
         [field: SerializeField]
         public ToggleMenuState DefaultState { get; private set; } = ToggleMenuState.Inactive;
 
-        [field: Range(0, 1)]
-        [field: SerializeField]
+        [field: SerializeField, Range(0, 1)]
         public float DefaultRadialValue { get; private set; }
 
         [field: SerializeField]

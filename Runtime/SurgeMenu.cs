@@ -17,7 +17,10 @@ namespace Surge
         
         public void SetName(string newName)
         {
-            name = newName; 
+            if (!string.IsNullOrEmpty(newName))
+                name = newName;
+            else
+                name = " ";
             Name = newName;
         }
   

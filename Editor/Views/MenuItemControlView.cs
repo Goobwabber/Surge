@@ -3,6 +3,7 @@ using Surge.Editor.Elements;
 using Surge.Editor.Extensions;
 using Surge.Models;
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -51,33 +52,50 @@ namespace Surge.Editor.Views
             // Path
             var topHorizontal = root.CreateHorizontal();
 
-            var parentSurgeMenu = _pathProperty.serializedObject.targetObject is GameObject go ? go.GetComponentInParent<SurgeMenu>() : null;
-            var pathFieldTooltip = parentSurgeMenu is not null ?
-                "The name of the menu item, used for generating the parameter name and the display in the hand menu." :
-                "The path of the menu item, used for generating the parameter name and the display in the hand menu. Use '/' to place something in a submenu.";
-            var pathField = topHorizontal.CreatePropertyField(_pathProperty).WithGrow(1f).WithLabel(parentSurgeMenu is not null ? "Menu Name" : "Menu Path").WithTooltip(pathFieldTooltip);
+            var surgeControl = _pathProperty.serializedObject.targetObject as SurgeControl;
+            string pathString = string.Empty;
+            for (SurgeMenu surgeMenu = surgeControl.GetComponentInParent<SurgeMenu>(); surgeMenu != null;
+                surgeMenu = surgeMenu.transform.parent.GetComponentInParent<SurgeMenu>())
+                pathString = surgeMenu.Name + "/" + pathString;
 
-            foreach (var element in pathField.Children())
-                Debug.Log(element.name);
+            var pathField = new TextField("Menu Path").WithGrow(1f);
+            pathField.tooltip = "The path of the menu item, used for generating the parameter name and the display in the hand menu. Use '/' to place something in a submenu.";
+            var pathFieldPath = new Label(pathString).WithPadding(0f).WithColor(SurgeUI.UneditableColor);
+            pathFieldPath.tooltip = $"This path is inherited from '{nameof(SurgeMenu)}' components in parent GameObjects.";
+            pathField[1].Insert(0, pathFieldPath);
+            pathField.BindProperty(_pathProperty);
+            topHorizontal.Add(pathField);
+
+            pathField.RegisterValueChangedCallback(ctx =>
+            {
+                if (!surgeControl || surgeControl.Settings.SynchronizeName is false)
+                    return;
+
+                surgeControl.SetName(ctx.newValue);
+            });
 
             var paneMenu = new PaneMenu().WithWidth(10f).WithHeight(20f).WithMarginLeft(20f);
             paneMenu.style.marginRight = 5f;
             topHorizontal.Add(paneMenu);
 
             // Icon
-            var iconField = root.CreatePropertyField(_iconProperty).WithLabel("Custom Icon")
-                .WithTooltip("The icon used when displaying this item in the hand menu.");
-            //iconField.labelElement.WithWidth(100f);
+            var iconField = new ObjectField("Custom Icon");
+            iconField.tooltip = "The icon used when displaying this item in the hand menu.";
+            iconField.objectType = typeof(Texture2D);
+            iconField.BindProperty(_iconProperty);
+            root.Add(iconField);
 
             // Default Radial Value
-            var defaultRadialField = root.CreatePropertyField(_defaultRadialProperty).WithHeight(20f)
-                .WithTooltip("The default position for the radial in the menu.");
-            //defaultRadialField.Q<TextField>().WithWidth(130f);
+            var defaultRadialField = new FloatSliderField("Default Value", 0f, 1f).WithHeight(18f);
+            defaultRadialField.tooltip = "The default position for the radial in the menu.";
+            defaultRadialField.SetBinding(_defaultRadialProperty);
+            root.Add(defaultRadialField);
 
             // Duration
-            var durationField = root.CreatePropertyField(_interpolationProperty.Property(nameof(InterpolationInfo.Duration)))
-                .WithTooltip("The duration (in seconds) this control takes to execute. A value of 0 means instant. This can also be called interpolation.");
-            //durationField.Q<TextField>().WithWidth(130f);
+            var durationField = new FloatSliderField("Interp. Duration (s)", 0f, 10f, true).WithHeight(18f);
+            durationField.tooltip = "The duration (in seconds) this control takes to execute. A value of 0 means instant. This can also be called interpolation.";
+            durationField.SetBinding(_interpolationProperty.Property(nameof(InterpolationInfo.Duration)));
+            root.Add(durationField);
 
 
 
