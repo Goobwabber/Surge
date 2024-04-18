@@ -39,14 +39,14 @@ namespace Surge.Editor.Elements
         private readonly Label _exclusionsLabel;
         private readonly LabelledEnumField _toggleField;
         private readonly VisualElement _objectsSeparator;
-        private readonly SurgeCollectionView<AnimationObjectElement> _objectsField;
+        private readonly SurgeCompactCollectionView<AnimationObjectElement> _objectsField;
         private readonly PaneMenu _paneMenu;
 
         // properties section
         private readonly VisualElement _propertyContainer;
         private readonly Label _propertiesLabel;
         private readonly VisualElement _propertiesSeparator;
-        private readonly SurgeCollectionView<AnimationPropertyElement> _propertiesField;
+        private readonly SurgeCompactCollectionView<AnimationPropertyElement> _propertiesField;
 
         // states section
         private readonly SurgeCollectionView<AnimationStateElement> _statesField;
@@ -56,11 +56,7 @@ namespace Surge.Editor.Elements
             _paneMenu = new PaneMenu().WithWidth(10f).WithHeight(20f);
             _paneMenu.style.marginLeft = 5f;
 
-            _objectsField = new(CreateObjectElement, (e, i) => e.SetData(CreateObject, () =>
-            {
-                _objectsProperty?.DeleteArrayElementAtIndex(i);
-                _objectsProperty?.serializedObject?.ApplyModifiedProperties();
-            }, _objectsProperty?.arraySize - 1 == i, _objectsProperty?.arraySize == 1, _groupType));
+            _objectsField = new(CreateObjectElement, " Object", (e, i) => e.SetData(_groupType));
             _objectsField.WithGrow(1f);
 
             _objectsSeparator = new VisualElement().WithMargin(0f).WithPadding(0f).WithBorderWidth(0f);
@@ -99,12 +95,9 @@ namespace Surge.Editor.Elements
 
 
             // Animation Properties
-            _propertiesField = new(CreatePropertyElement, (e, i) => e.SetData(CreateProperty, () =>
-            {
-                _propertiesProperty?.DeleteArrayElementAtIndex(i);
-                _propertiesProperty?.serializedObject?.ApplyModifiedProperties();
-            }, _propertiesProperty?.arraySize - 1 == i, _propertiesProperty?.arraySize == 1, 
-            _objectsProperty, _sharedValueTypeProperty, _sharedColorTypeProperty, _sharedObjectTypeProperty, _bindingService, _groupType));
+            _propertiesField = new(CreatePropertyElement, " Property", (e, i) => 
+                e.SetData(_objectsProperty, _sharedValueTypeProperty, _sharedColorTypeProperty, 
+                _sharedObjectTypeProperty, _bindingService, _groupType));
             _propertiesField.WithGrow(1f);
 
             _propertiesLabel = new Label("Target Properties");

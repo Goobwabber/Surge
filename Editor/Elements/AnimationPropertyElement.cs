@@ -14,6 +14,8 @@ namespace Surge.Editor.Elements
 {
     internal class AnimationPropertyElement : VisualElement, ISurgeBindable
     {
+        public static string Name = "Animation Property";
+
         // properties
         private SerializedProperty? _nameProperty;
         private SerializedProperty? _contextTypeProperty;
@@ -28,9 +30,7 @@ namespace Surge.Editor.Elements
 
         // vars
         private AnimationGroupType _groupType;
-        private bool _onlyArrayItem;
         private Action? _selector;
-        private UnityEngine.Object[]? _targetObjects;
         private BindingService? _bindingService;
 
         // ui
@@ -81,12 +81,6 @@ namespace Surge.Editor.Elements
             _searchButton = nameInputBox.CreateButton(string.Empty).WithWidth(18f).WithHeight(18f).WithMargin(0f).WithBorderRadius(0f);
             _searchButton.style.backgroundImage = SurgeUI.GetSearchImage();
             _searchButton.AddToClassList(ObjectField.selectorUssClassName);
-
-            _addButton = this.CreateButton("+").WithHeight(20f).WithWidth(20f).WithFontSize(18f).WithFontStyle(FontStyle.Bold);
-            _addButton.style.paddingTop = 0f;
-            _addButton.style.paddingBottom = 2f;
-            _addButton.style.marginLeft = 1f;
-            _addButton.style.marginRight = 1f;
         }
 
         public void SetBinding(SerializedProperty property)
@@ -157,7 +151,7 @@ namespace Surge.Editor.Elements
             _searchButton.clicked += _selector;
         }
 
-        public void SetData(Action? onAddRequested, Action? onRemoveRequested, bool lastArrayItem, bool onlyArrayItem, 
+        public void SetData(
             SerializedProperty? objectsProperty, 
             SerializedProperty? sharedValueTypeProperty,
             SerializedProperty? sharedColorTypeProperty,
@@ -172,13 +166,7 @@ namespace Surge.Editor.Elements
 
             // set vars
             _groupType = type;
-            _onlyArrayItem = onlyArrayItem;
             _bindingService = bindingService;
-
-            // ui stuff
-            _addButton.clicked -= onAddRequested;
-            _addButton.clicked += onAddRequested;
-            _addButton.Visible(lastArrayItem);
 
             // update target objects
             UpdateTargetObjects();
@@ -198,16 +186,6 @@ namespace Surge.Editor.Elements
             //this.TrackPropertyValue(sharedValueTypeProperty!, prop => CheckForIssues());
             //this.TrackPropertyValue(sharedColorTypeProperty!, prop => CheckForIssues());
             //this.TrackPropertyValue(sharedObjectTypeProperty!, prop => CheckForIssues());
-
-            ContextualMenuManipulator rightMenu = new(RightMenuPopulate);
-            rightMenu.activators.Add(new ManipulatorActivationFilter { button = MouseButton.RightMouse });
-            this.AddManipulator(rightMenu);
-
-            void RightMenuPopulate(ContextualMenuPopulateEvent evt)
-            {
-                if (!_onlyArrayItem)
-                    evt.menu.AppendAction("Remove", evt => onRemoveRequested?.Invoke());
-            }
         }
 
         private void CheckForIssues()
