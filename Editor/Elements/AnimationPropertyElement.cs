@@ -8,7 +8,6 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
-using AnimationPropertyInfo = Surge.Models.AnimationPropertyInfo;
 
 namespace Surge.Editor.Elements
 {

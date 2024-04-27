@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.CompilerServices;
 using Surge.Editor.Elements;
 using UnityEditor;
 using UnityEditor.UIElements;

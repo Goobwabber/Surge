@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace Surge.Models
+﻿namespace Surge.Models
 {
     internal enum ToggleMode
     {

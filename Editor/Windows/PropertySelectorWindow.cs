@@ -11,7 +11,6 @@ using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UIElements;
 using VRC.SDKBase;
-using AnimationPropertyInfo = Surge.Models.AnimationPropertyInfo;
 
 namespace Surge.Editor.Windows
 {
