@@ -28,10 +28,10 @@ namespace Surge.Editor.Windows
             window._target = property;
             window._bindingService = bindingService;
 
-            var screenPos = GUIUtility.GUIToScreenPoint(
-                Event.current != null ? Event.current.mousePosition : Vector3.zero
-            );
-            _lastSize ??= new Rect(screenPos - new Vector2(200, 30f), new Vector2(500, 550));
+            var mainWindow = EditorGUIUtility.GetMainWindowPosition();
+            var screenPos = mainWindow.position + new Vector2(mainWindow.width, mainWindow.height) / 2;
+            var windowSize = new Vector2(500, 550);
+            _lastSize ??= new Rect(screenPos - windowSize / 2, windowSize);
             window.position = _lastSize.Value;
         }
         
@@ -78,15 +78,6 @@ namespace Surge.Editor.Windows
 
             var objects = propertyGroup.Objects.Select(o => o is Component c ? c.gameObject : o is GameObject g ? g : null).ToArray();
 
-            // keeping this here in case we ever find a way to differentiate between context type on the UI.
-            // for now, renderer type properties will automatically be merged.
-            //var mergeRenderersToggle = new Toggle();
-            //mergeRenderersToggle.style.marginLeft = StyleKeyword.Auto;
-            //mergeRenderersToggle.label = "Combine Renderer Properties";
-            //mergeRenderersToggle.WithFontSize(11f);
-            //mergeRenderersToggle.WithPadding(2f);
-            //mergeRenderersToggle.value = true;
-
             var typeFilterLabel = new Label("Target Type:").WithPadding(3f);
             typeFilterLabel.style.marginLeft = StyleKeyword.Auto;
 
@@ -98,9 +89,8 @@ namespace Surge.Editor.Windows
             headingGroup.CreateLabel($"Current Avatar: {avatarGameObject.name}").WithPadding(3f);
             headingGroup.Add(typeFilterLabel);
             headingGroup.Add(typeFilter);
-            //headingGroup.Add(mergeRenderersToggle);
 
-            if (propertyGroup.AnimationType is AnimationGroupType.ObjectToggle)
+            if (propertyGroup.GroupType is AnimationGroupType.ObjectToggle)
             {
                 // wtf?
                 // Maybe make an error happen? but shouldn't be possible so
@@ -132,7 +122,7 @@ namespace Surge.Editor.Windows
 
             // second: load searchable properties
             var bindingSearch = binder.GetPropertyBindings().Where(b => b.GameObject != avatarGameObject);
-            if (propertyGroup.AnimationType is AnimationGroupType.Avatar)
+            if (propertyGroup.GroupType is AnimationGroupType.Avatar)
                 bindingSearch = bindingSearch.GroupBy(p => p.QualifiedId).Select(g => g.First());
 
             var bindings = bindingSearch.ToArray();
@@ -223,7 +213,7 @@ namespace Surge.Editor.Windows
                     isVector ? () => HandlePseudoProperty(1) : null,
                     isTriOrQuadVector ? () => HandlePseudoProperty(2) : null,
                     binding.Type is PropertyValueType.Vector4 ? () => HandlePseudoProperty(3) : null,
-                    propertyGroup.AnimationType is not AnimationGroupType.Avatar
+                    propertyGroup.GroupType is not AnimationGroupType.Avatar
                 );
             });
 
@@ -240,6 +230,12 @@ namespace Surge.Editor.Windows
 
                 var materialsOnly = search.Contains("t:Material");
                 var blendshapesOnly = search.Contains("t:Blendshape");
+                var valueTypeString = search.Split(' ').FirstOrDefault(s => s.Length > 1 && string.CompareOrdinal(s[..2], "v:") == 0);
+                var valueTypeFilter = PropertyValueType.Boolean;
+                var colorTypeFilter = PropertyColorType.None;
+                var valueTypeOnly = !string.IsNullOrEmpty(valueTypeString) && TryGetPropertyType(valueTypeString[2..], out valueTypeFilter, out colorTypeFilter);
+                if (valueTypeOnly)
+                    search = search.Replace(valueTypeString, string.Empty);
 
                 search = search
                     .Replace("t:Material", string.Empty)
@@ -259,6 +255,9 @@ namespace Surge.Editor.Windows
                             continue;
 
                         if (blendshapesOnly && source is not SurgePropertySource.Blendshape)
+                            continue;
+
+                        if (valueTypeOnly && valueTypeFilter != group.Type || colorTypeFilter != group.Color)
                             continue;
 
                         foreach (var part in searchParts)
@@ -296,7 +295,6 @@ namespace Surge.Editor.Windows
 
             searchField.RegisterValueChangedCallback(ctx => RefreshList(ctx.newValue, typeFilter.value, true));
             typeFilter.RegisterValueChangedCallback(ctx => RefreshList(searchField.value, ctx.newValue, true));
-            //mergeRenderersToggle.RegisterValueChangedCallback(ctx => RefreshList(searchField.value, ctx.newValue));
 
             VisualElement container = new();
             container.Add(list);
@@ -306,10 +304,82 @@ namespace Surge.Editor.Windows
             
             list.selectionType = SelectionType.None;
 
-            var previousProperty = property.Property(nameof(AnimationPropertyInfo.Name)).stringValue;
             var previousContext = property.Property(nameof(AnimationPropertyInfo.ContextType)).stringValue;
-            searchField.value = string.IsNullOrWhiteSpace(previousProperty) ? "" : previousProperty;
+
+            // If this is a group type that uses shared animation states, pull shared data to filter the search with
+            var isSharedValueType = propertyGroup.GroupType is AnimationGroupType.ObjectToggle or AnimationGroupType.Normal or AnimationGroupType.Avatar;
+            var previousProperty = isSharedValueType ? propertyGroup.Properties.FirstOrDefault()?.Name : property.Property(nameof(AnimationPropertyInfo.Name)).stringValue;
+            var previousValueType = isSharedValueType ? propertyGroup.SharedValueType : (PropertyValueType)property.Property(nameof(AnimationPropertyInfo.ValueType)).enumValueIndex;
+            var previousColorType = isSharedValueType ? propertyGroup.SharedColorType : (PropertyColorType)property.Property(nameof(AnimationPropertyInfo.ColorType)).enumValueIndex;
+
             typeFilter.value = Type.GetType(previousContext);
+
+            // check to see if binding exists or if we are smoking crack before we insert value type into searchbar
+            if (!string.IsNullOrEmpty(previousProperty))
+            {
+                foreach (var binding in bindings)
+                {
+                    if (string.CompareOrdinal(binding.Name, previousProperty) != 0)
+                        continue;
+                    // TODO: this should probably allow object searches but goobie is lazy atm
+                    searchField.value = $"v:{GetPropertyTypeName(previousValueType, previousColorType)} ";
+                    break;
+                }
+            }
+
+            for(int i = 0; i < items.Count; i++)
+            {
+                if (string.CompareOrdinal(items[i].Name, previousProperty) != 0)
+                    continue;
+                list.ScrollToItem(i);
+                break;
+            }
+        }
+
+        private static string GetPropertyTypeName(PropertyValueType valueType, PropertyColorType colorType)
+        {
+            return valueType switch
+            {
+                PropertyValueType.Boolean => "Bool",
+                PropertyValueType.Integer => "Int",
+                PropertyValueType.Float => "Float",
+                PropertyValueType.Vector2 => "Vector2",
+                PropertyValueType.Vector3 or PropertyValueType.Vector4 => colorType switch
+                {
+                    PropertyColorType.None => valueType is PropertyValueType.Vector3 ? "Vector3" : "Vector4",
+                    PropertyColorType.RGB => valueType is PropertyValueType.Vector3 ? "RGB" : "RGBA",
+                    PropertyColorType.HDR => valueType is PropertyValueType.Vector3 ? "HDR" : "HDRA",
+                    _ => "<null>",
+                },
+                PropertyValueType.Object => "Object",
+                _ => "<null>",
+            };
+        }
+
+        private static bool TryGetPropertyType(string name, out PropertyValueType valueType, out PropertyColorType colorType)
+        {
+            var lowercase = name.ToLower();
+
+            valueType = lowercase switch
+            {
+                "bool" => PropertyValueType.Boolean,
+                "int" => PropertyValueType.Integer,
+                "float" => PropertyValueType.Float,
+                "vector2" => PropertyValueType.Vector2,
+                "vector3" or "rgb" or "hdr" => PropertyValueType.Vector3,
+                "vector4" or "rgba" or "hdra" => PropertyValueType.Vector4,
+                "object" => PropertyValueType.Object,
+                _ => (PropertyValueType)(-1),
+            };
+
+            colorType = lowercase switch
+            {
+                "rgb" or "rgba" => PropertyColorType.RGB,
+                "hdr" or "hdra" => PropertyColorType.HDR,
+                _ => PropertyColorType.None,
+            };
+
+            return (int)valueType != -1;
         }
 
         private void OnLostFocus()

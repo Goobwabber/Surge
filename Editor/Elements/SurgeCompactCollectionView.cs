@@ -12,30 +12,19 @@ namespace Surge.Editor.Elements
     {
         private readonly Func<T> _builder;
         private readonly VisualElement _container;
-        private readonly string _removeName;
 
         private Action<T, int>? _binder;
         private SerializedProperty? _arrayProperty;
+        private string _removeName = string.Empty;
+        private int _maxLength = -1;
 
         public SurgeCompactCollectionView(
             Func<T> builder,
-            string? removeName = null,
             Action<T, int>? binder = null,
             SerializedProperty? arrayProperty = null)
-            : this(builder, binder, arrayProperty, removeName)
-        {
-
-        }
-
-        public SurgeCompactCollectionView(
-            Func<T> builder,
-            Action<T, int>? binder = null,
-            SerializedProperty? arrayProperty = null,
-            string? removeName = null)
         {
             _binder = binder;
             _builder = builder;
-            _removeName = removeName;
             _arrayProperty = arrayProperty;
             _container = this.CreateElement();
             
@@ -90,6 +79,11 @@ namespace Surge.Editor.Elements
             // Remove any extra elements.
             while (_container.childCount > index)
                 _container.RemoveAt(_container.childCount - 1);
+
+            // Remove elements that shouldn't be visible
+            if (_maxLength != -1)
+                while (_container.childCount > _maxLength)
+                    _container.RemoveAt(_container.childCount - 1);
         }
 
         public void SetData(Action<T, int> binder)
@@ -111,17 +105,45 @@ namespace Surge.Editor.Elements
             BuildCollectionView();
         }
 
-        void OnAddRequested()
+        public void SetRemoveName(string removeName)
+        {
+            _removeName = ' ' + removeName;
+        }
+
+        public void SetMaxLength(int maxLength)
+        {
+            _maxLength = maxLength;
+            BuildCollectionView();
+        }
+
+        private void ClampMaxLength(int length)
+        {
+            if (_arrayProperty is null || length == -1 || _arrayProperty.arraySize <= length)
+                return;
+
+            for(int i = _arrayProperty.arraySize; i > length; i--)
+            {
+                _arrayProperty.DeleteArrayElementAtIndex(i - 1);
+                _arrayProperty.serializedObject.ApplyModifiedProperties();
+            }
+        }
+
+        private void OnAddRequested()
         {
             var index = _arrayProperty.arraySize++;
             _arrayProperty.serializedObject.ApplyModifiedProperties();
             _arrayProperty.GetArrayElementAtIndex(index).SetValue(null!);
         }
 
-        void OnRemoveRequested(int index)
+        private void OnRemoveRequested(int index)
         {
-            _arrayProperty?.DeleteArrayElementAtIndex(index);
-            _arrayProperty?.serializedObject?.ApplyModifiedProperties();
+            // i just remove the properties here bc when i removed them inside of 'SetMaxLength' it caused gc issues and i AINT dealing with figuring that out.
+            // hiding the overflow elements from the user works for now.
+            ClampMaxLength(_maxLength);
+            if (_maxLength != -1 && index > _maxLength - 1)
+                return;
+            _arrayProperty.DeleteArrayElementAtIndex(index);
+            _arrayProperty.serializedObject.ApplyModifiedProperties();
             _container.RemoveAt(_container.childCount - 1);
         }
 
@@ -167,10 +189,10 @@ namespace Surge.Editor.Elements
 
             public void SetPosition(int collectionIndex, int collectionLength)
             {
+                var maxLength = _collectionView._maxLength;
                 _onlyArrayItem = collectionLength == 1;
                 _collectionIndex = collectionIndex;
-
-                addButton.Visible(collectionIndex == collectionLength - 1);
+                addButton.Visible(collectionIndex == collectionLength - 1 && collectionIndex != maxLength - 1);
             }
         }
     }

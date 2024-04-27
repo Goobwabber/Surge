@@ -30,6 +30,7 @@ namespace Surge.Editor.Elements
 
         // vars
         private AnimationGroupType _groupType;
+        private bool _firstArrayItem;
         private Action? _selector;
         private BindingService? _bindingService;
 
@@ -112,6 +113,7 @@ namespace Surge.Editor.Elements
                 _componentField.tooltip = $"The component type the target property is located on. ({evt.newValue.Name})";
                 _contextTypeProperty.SetValue(evt.newValue.AssemblyQualifiedName);
                 _contextTypeProperty.serializedObject.ApplyModifiedProperties();
+                CheckForIssues();
             });
 
             this.TrackPropertyValue(_contextTypeProperty, prop =>
@@ -136,6 +138,14 @@ namespace Surge.Editor.Elements
                 var colorType = (PropertyColorType)_colorTypeProperty.enumValueIndex;
                 var objectType = _objectTypeProperty.stringValue;
                 _propertyTypeLabel.Value = GetPropertyTypeName(valueType, colorType, objectType);
+
+                if (_firstArrayItem)
+                {
+                    _sharedValueTypeProperty.SetValue(valueType);
+                    _sharedColorTypeProperty.SetValue(colorType);
+                    _sharedObjectTypeProperty.SetValue(objectType);
+                }
+
                 CheckForIssues();
             }
 
@@ -152,20 +162,20 @@ namespace Surge.Editor.Elements
         }
 
         public void SetData(
+            bool firstArrayItem,
             SerializedProperty? objectsProperty, 
-            SerializedProperty? sharedValueTypeProperty,
-            SerializedProperty? sharedColorTypeProperty,
-            SerializedProperty? sharedObjectTypeProperty,
+            SerializedProperty? groupProperty,
             BindingService? bindingService,
             AnimationGroupType type)
         {
-            // set properties
-            _sharedValueTypeProperty = sharedValueTypeProperty;
-            _sharedColorTypeProperty = sharedColorTypeProperty;
-            _sharedObjectTypeProperty = sharedObjectTypeProperty;
+            // set props
+            _sharedValueTypeProperty = groupProperty.Property(nameof(AnimationGroupInfo.SharedValueType));
+            _sharedColorTypeProperty = groupProperty.Property(nameof(AnimationGroupInfo.SharedColorType));
+            _sharedObjectTypeProperty = groupProperty.Property(nameof(AnimationGroupInfo.SharedObjectType));
 
             // set vars
             _groupType = type;
+            _firstArrayItem = firstArrayItem;
             _bindingService = bindingService;
 
             // update target objects
@@ -178,14 +188,14 @@ namespace Surge.Editor.Elements
                 _ = bindingService.TryGetSearchableObjects(out GameObject[]? objects);
                 if (objects is not null)
                     _componentField.Push(objects); // we dont care if get fails as long as not null
+                CheckForIssues();
             }
 
             // update shared value type
             CheckForIssues();
-            // TODO: fuck this.
-            //this.TrackPropertyValue(sharedValueTypeProperty!, prop => CheckForIssues());
-            //this.TrackPropertyValue(sharedColorTypeProperty!, prop => CheckForIssues());
-            //this.TrackPropertyValue(sharedObjectTypeProperty!, prop => CheckForIssues());
+            this.TrackPropertyValue(_sharedValueTypeProperty!, prop => CheckForIssues());
+            this.TrackPropertyValue(_sharedColorTypeProperty!, prop => CheckForIssues());
+            this.TrackPropertyValue(_sharedObjectTypeProperty!, prop => CheckForIssues());
         }
 
         private void CheckForIssues()
@@ -196,7 +206,8 @@ namespace Surge.Editor.Elements
                 _objectTypeProperty is null ||
                 _sharedValueTypeProperty is null ||
                 _sharedColorTypeProperty is null ||
-                _sharedObjectTypeProperty is null)
+                _sharedObjectTypeProperty is null ||
+                _bindingService is null)
                 return;
 
             var name = _propertyNameField.value;
@@ -214,7 +225,7 @@ namespace Surge.Editor.Elements
                 _issueIndicator.style.backgroundImage = SurgeUI.GetWarningImage();
                 _issueIndicator.Visible(true);
                 _propertyTypeLabel.Visible(false);
-                _issueIndicator.tooltip = $"Animatable property with name \"{name}\" not found on any components of type \"{contextType.Name}\".";
+                _issueIndicator.tooltip = $"Animatable property with name \"{name}\" not found on any components of type \"{contextType?.Name ?? "<null>"}\".";
 
                 // didnt find property so murder value types before return
                 _valueTypeProperty.SetValue(PropertyValueType.Boolean);
@@ -259,7 +270,7 @@ namespace Surge.Editor.Elements
         {
             if (property is null)
                 return;
-
+            
             PropertySelectorWindow.Present(property, bindingService);
         }
 
@@ -274,8 +285,8 @@ namespace Surge.Editor.Elements
                 PropertyValueType.Vector3 or PropertyValueType.Vector4 => colorType switch
                 {
                     PropertyColorType.None => valueType is PropertyValueType.Vector3 ? "Vector3" : "Vector4",
-                    PropertyColorType.RGB => "RGB",
-                    PropertyColorType.HDR => "HDR",
+                    PropertyColorType.RGB => valueType is PropertyValueType.Vector3 ? "RGB" : "RGBA",
+                    PropertyColorType.HDR => valueType is PropertyValueType.Vector3 ? "HDR" : "HDRA",
                     _ => "<null>",
                 },
                 PropertyValueType.Object => Type.GetType(objectType)?.Name ?? "Object",

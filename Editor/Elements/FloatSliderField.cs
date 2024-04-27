@@ -2,6 +2,7 @@
 using Surge.Editor.Models;
 using UnityEditor;
 using UnityEditor.UIElements;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Surge.Editor.Elements
@@ -34,7 +35,7 @@ namespace Surge.Editor.Elements
                     this.value = _minSliderValue;
                 if (!_allowOverflow && ctx.newValue > _maxSliderValue)
                     this.value = _maxSliderValue;
-                HandleFloatFieldValue(ctx.newValue);
+                HandleFloatFieldValue(this.value);
                 var clampedValue = ctx.newValue <= 10f ? ctx.newValue : 10f;
                 if (_slider.value != clampedValue)
                     _slider.value = clampedValue;

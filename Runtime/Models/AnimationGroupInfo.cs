@@ -7,7 +7,7 @@ namespace Surge.Models
     internal class AnimationGroupInfo
     {
         [field: SerializeField]
-        public AnimationGroupType AnimationType { get; private set; }
+        public AnimationGroupType GroupType { get; private set; }
 
         [field: SerializeField]
         public AnimationToggleType ToggleType { get; private set; }
@@ -19,11 +19,20 @@ namespace Surge.Models
         public AnimationPropertyInfo[] Properties { get; private set; } = Array.Empty<AnimationPropertyInfo>();
 
         [field: SerializeField]
+        public PropertyValueType SharedValueType { get; internal set; }
+
+        [field: SerializeField]
+        public PropertyColorType SharedColorType { get; internal set; }
+
+        [field: SerializeField]
+        public string SharedObjectType { get; internal set; } = string.Empty;
+
+        [field: SerializeField]
         public AnimationStateInfo[] SharedAnimationStates { get; private set; } = Array.Empty<AnimationStateInfo>();
 
         public AnimationGroupInfo(AnimationGroupType type)
         {
-            AnimationType = type;
+            GroupType = type;
         }
     }
 }

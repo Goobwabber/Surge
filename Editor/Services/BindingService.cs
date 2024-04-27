@@ -178,7 +178,7 @@ namespace Surge.Editor.Services
             var properties = GetPropertyBindings();
             foreach (var property in properties)
             {
-                if (property.ContextType != contextType)
+                if (!contextType.IsAssignableFrom(property.ContextType))
                     continue;
                 if (string.CompareOrdinal(property.Name, name) != 0)
                     continue;
