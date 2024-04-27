@@ -27,6 +27,8 @@ namespace Surge.Editor.Elements
         private SerializedProperty? _sharedValueTypeProperty;
         private SerializedProperty? _sharedColorTypeProperty;
         private SerializedProperty? _sharedObjectTypeProperty;
+        private SerializedProperty? _isPlatformExclusiveProperty;
+        private SerializedProperty? _showSharedCurveProperty;
         private SerializedProperty? _menuTypeProperty;
 
         // vars
@@ -51,6 +53,15 @@ namespace Surge.Editor.Elements
         // states section
         private readonly VisualElement _compactVectorKey;
         private readonly SurgeCompactCollectionView<AnimationStateElement> _statesField;
+        private readonly Label _curveFieldLabel;
+        private readonly CurveField _curveField;
+
+        // settings bar
+        private readonly VisualElement _settingsContainer;
+        private readonly LabelledEnumField _groupTypeField;
+        private readonly LabelledEnumField _platformOnlyField;
+        private readonly LabelledEnumField _easingField;
+        private readonly SettingLabelElement _curveLabel;
 
         public AnimationGroupElement()
         {
@@ -144,14 +155,47 @@ namespace Surge.Editor.Elements
                 e.SetData(_sharedStatesProperty?.arraySize - 1 == i, _sharedStatesProperty?.arraySize ?? 0, _menuTypeProperty, 
                     _sharedValueTypeProperty, _sharedColorTypeProperty, _sharedObjectTypeProperty, _groupType));
             _statesField.WithGrow(1f).SetRemoveName("State");
+            _statesField.style.marginBottom = 5f;
             container.Add(_statesField);
+
+            // Animation States: curve
+            _curveFieldLabel = new Label("X Axis: Radial value, Y Axis: Value to set the properties to.").WithMarginLeft(3f);
+            container.Add(_curveFieldLabel);
+            _curveField = new CurveField().WithHeight(40f);
+            _curveField.ranges = new Rect(0, -1, 1, -1);
+            _curveField.tooltip = "The curve to control the property values with. X axis is the input value, and the Y axis is the desired value for the properties to be.";
+            container.Add(_curveField);
+
+
+
+            // Settings bar
+            _settingsContainer = container.CreateHorizontal();
+            _settingsContainer.style.alignItems = Align.FlexStart;
+            _settingsContainer.style.flexWrap = Wrap.Wrap;
+            _settingsContainer.style.marginTop = 1f;
+            _settingsContainer.style.marginBottom = 2f;
+
+            _groupTypeField = new LabelledEnumField(AnimationGroupType.Normal, "Group Type: ", "The type of this animation group.");
+            _settingsContainer.Add(_groupTypeField);
+            _groupTypeField.SetEnabled(false); // fuck you if you want to change the group type
+            _easingField = new LabelledEnumField(SurgeEasing.Sine, "Easing: ", "Easing is the rate of value change. Basically, this is the way this animation group will smooth between different values.");
+            _settingsContainer.Add(_easingField);
+            _platformOnlyField = new LabelledEnumField(SurgePlatformType.PC, "Only on: ", "This animation group will only build on a specific platform.");
+            _settingsContainer.Add(_platformOnlyField);
+            _curveLabel = new SettingLabelElement("Curve", "This animation group uses a curve to determine it's output values.");
+            _settingsContainer.Add(_curveLabel);
+
+            ContextualMenuManipulator settingMenu = new(SettingsMenuPopulate);
+            settingMenu.activators.Add(new ManipulatorActivationFilter { button = MouseButton.RightMouse });
+            _settingsContainer.AddManipulator(settingMenu);
         }
 
         public void SetBinding(SerializedProperty property)
         {
             // properties
             _groupProperty = property.Copy();
-            _groupType = (AnimationGroupType)property.Property(nameof(AnimationGroupInfo.GroupType)).enumValueIndex;
+            var groupTypeProperty = property.Property(nameof(AnimationGroupInfo.GroupType));
+            _groupType = (AnimationGroupType)groupTypeProperty.enumValueIndex;
             _toggleTypeProperty = property.Property(nameof(AnimationGroupInfo.ToggleType));
             _objectsProperty = property.Property(nameof(AnimationGroupInfo.Objects)).Field("Array");
             _propertiesProperty = property.Property(nameof(AnimationGroupInfo.Properties)).Field("Array");
@@ -159,11 +203,21 @@ namespace Surge.Editor.Elements
             _sharedValueTypeProperty = property.Property(nameof(AnimationGroupInfo.SharedValueType));
             _sharedColorTypeProperty = property.Property(nameof(AnimationGroupInfo.SharedColorType));
             _sharedObjectTypeProperty = property.Property(nameof(AnimationGroupInfo.SharedObjectType));
+            var easingProperty = property.Property(nameof(AnimationGroupInfo.GroupEasing));
+            _isPlatformExclusiveProperty = property.Property(nameof(AnimationGroupInfo.IsPlatformExclusive));
+            var platformProperty = property.Property(nameof(AnimationGroupInfo.PlatformType));
+            _showSharedCurveProperty = property.Property(nameof(AnimationGroupInfo.ShowSharedCurve));
+            var sharedCurveProperty = property.Property(nameof(AnimationGroupInfo.SharedCurve));
 
             // bind properties
             _toggleField.BindProperty(_toggleTypeProperty);
             _objectsField.SetBinding(_objectsProperty!);
             _statesField.SetBinding(_sharedStatesProperty!);
+            _curveField.BindProperty(sharedCurveProperty);
+            _groupTypeField.BindProperty(groupTypeProperty);
+            _easingField.BindProperty(easingProperty);
+            _platformOnlyField.BindProperty(platformProperty);
+
 
             // fix arrays to have initial element
             if (_objectsProperty?.arraySize == 0)
@@ -205,13 +259,19 @@ namespace Surge.Editor.Elements
             // SetData will run before SetBinding, so unbind stuff here :)
             this.Unbind();
 
-            _paneMenu.SetData(evt => evt.menu.AppendAction("Remove" + _groupType switch
+            _paneMenu.SetData(evt => 
             {
-                AnimationGroupType.ObjectToggle => " Object Toggle",
-                AnimationGroupType.Normal => " Property Animation",
-                AnimationGroupType.Avatar => " Avatar Property Animation",
-                _ => ""
-            }, _ => onRemoveRequested?.Invoke()));
+                SettingsMenuPopulate(evt);
+                if (evt.menu.MenuItems().Count > 0)
+                    evt.menu.AppendSeparator();
+                evt.menu.AppendAction("Remove" + _groupType switch
+                {
+                    AnimationGroupType.ObjectToggle => " Object Toggle",
+                    AnimationGroupType.Normal => " Property Animation",
+                    AnimationGroupType.Avatar => " Global Property Animation",
+                    _ => ""
+                }, _ => onRemoveRequested?.Invoke());
+            });
 
             _menuTypeProperty = menuProperty.Property(nameof(MenuItemInfo.Type));
 
@@ -219,12 +279,44 @@ namespace Surge.Editor.Elements
             UpdateUI();
         }
 
+
+
         private GameObject?[] GetTargetObjects()
         {
             if (_groupProperty is null)
                 return Array.Empty<GameObject>();
             var group = (AnimationGroupInfo)_groupProperty.boxedValue;
             return group.Objects.Select(o => o is Component c ? c.gameObject : o is GameObject g ? g : null).ToArray();
+        }
+
+        void SettingsMenuPopulate(ContextualMenuPopulateEvent evt)
+        {
+            if (_menuTypeProperty is null)
+                return;
+
+            var enabledStatus = DropdownMenuAction.Status.Checked;
+            var disabledStatus = DropdownMenuAction.Status.Normal;
+            var lockedStatus = DropdownMenuAction.Status.Disabled;
+
+            var radialMode = _menuTypeProperty.enumValueIndex == (int)MenuItemType.Radial;
+            var sharedValueType = (PropertyValueType?)_sharedValueTypeProperty?.enumValueIndex;
+            var allowCurve = radialMode && sharedValueType is PropertyValueType.Boolean or PropertyValueType.Integer or PropertyValueType.Float;
+
+            evt.menu.AppendAction("Platform Exclusive",
+                evt => UpdateValues(_isPlatformExclusiveProperty),
+                _isPlatformExclusiveProperty?.boolValue ?? false ? enabledStatus : disabledStatus);
+            evt.menu.AppendAction("Custom Animation Curve",
+                evt => UpdateValues(_showSharedCurveProperty),
+                !allowCurve ? lockedStatus : _showSharedCurveProperty?.boolValue ?? false ? enabledStatus : disabledStatus);
+
+            void UpdateValues(SerializedProperty? prop)
+            {
+                if (prop is null)
+                    return;
+                prop.boolValue = !prop.boolValue;
+                prop.serializedObject.ApplyModifiedProperties();
+                UpdateUI();
+            }
         }
 
         private void UpdateUI()
@@ -245,6 +337,9 @@ namespace Surge.Editor.Elements
                 MenuItemType.FourAxis => 4,
                 _ => -1,
             });
+
+            if (_isPlatformExclusiveProperty is not null)
+                _platformOnlyField.Visible(_isPlatformExclusiveProperty.boolValue);
 
             if (_objectsProperty is not null && _propertiesProperty is not null)
             {
@@ -275,6 +370,18 @@ namespace Surge.Editor.Elements
                     _compactVectorKey[2].WithWidth(AnimationStateElement.VectorFieldWidth + (isVector4 ? -2f : 20f));
                     // if z label not shown, add button length to y label.
                     _compactVectorKey[1].WithWidth(AnimationStateElement.VectorFieldWidth + (isVector4 || isVector3 ? -2f : 20f));
+                }
+
+                if (_showSharedCurveProperty is not null)
+                {
+                    // we can only allow the user to use an animation curve if the value type is analog.
+                    var showSharedCurve = _showSharedCurveProperty.boolValue && sharedValueType is PropertyValueType.Boolean or PropertyValueType.Integer or PropertyValueType.Float;
+                    _easingField.Visible(menuType is MenuItemType.Radial && !showSharedCurve);
+                    var curveFieldVisible = menuType is MenuItemType.Radial && showSharedCurve;
+                    _curveLabel.Visible(curveFieldVisible);
+                    _curveFieldLabel.Visible(curveFieldVisible);
+                    _curveField.Visible(curveFieldVisible);
+                    _statesField.Visible(!curveFieldVisible);
                 }
             }
         }

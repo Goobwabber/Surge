@@ -210,7 +210,7 @@ namespace Surge.Editor.Services
 
                     // For the time being we'll only be working with the primitive float, int, and bool properties.
                     // In the future we may be able to support others like Materials and such.
-                    if (type != typeof(float) && type != typeof(int) && type != typeof(bool) && type != typeof(Material))//typeof(UnityEngine.Object).IsAssignableFrom(type))
+                    if (type != typeof(float) && type != typeof(int) && type != typeof(bool) && !typeof(UnityEngine.Object).IsAssignableFrom(type))
                         return null;
 
                     if (preSearch == null)

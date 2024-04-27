@@ -180,8 +180,11 @@ namespace Surge.Editor.Elements
 
                 void RightMenuPopulate(ContextualMenuPopulateEvent evt)
                 {
-                    if (!_onlyArrayItem)
-                        evt.menu.AppendAction("Remove" + _collectionView._removeName, evt => _collectionView.OnRemoveRequested(_collectionIndex));
+                    if (_onlyArrayItem)
+                        return;
+                    if (evt.menu.MenuItems().Count > 0)
+                        evt.menu.AppendSeparator();
+                    evt.menu.AppendAction("Remove" + _collectionView._removeName, evt => _collectionView.OnRemoveRequested(_collectionIndex));
                 }
 
                 _collectionView._container.Add(this);

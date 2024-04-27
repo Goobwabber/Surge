@@ -37,7 +37,7 @@ namespace Surge.Editor.Views
             {
                 evt.menu.AppendAction("Object Toggle", evt => CreateGroup(AnimationGroupType.ObjectToggle));
                 evt.menu.AppendAction("Property", evt => CreateGroup(AnimationGroupType.Normal));
-                evt.menu.AppendAction("Avatar Property", evt => CreateGroup(AnimationGroupType.Avatar));
+                evt.menu.AppendAction("Global Property", evt => CreateGroup(AnimationGroupType.Avatar));
 
                 void CreateGroup(AnimationGroupType type)
                 {

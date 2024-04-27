@@ -30,6 +30,21 @@ namespace Surge.Models
         [field: SerializeField]
         public AnimationStateInfo[] SharedAnimationStates { get; private set; } = Array.Empty<AnimationStateInfo>();
 
+        [field: SerializeField]
+        public SurgeEasing GroupEasing { get; private set; } = SurgeEasing.Sine;
+
+        [field: SerializeField]
+        public bool IsPlatformExclusive { get; private set; } = false;
+
+        [field: SerializeField]
+        public SurgePlatformType PlatformType { get; private set; } = SurgePlatformType.PC;
+
+        [field: SerializeField]
+        public bool ShowSharedCurve { get; private set; } = false;
+
+        [field: SerializeField]
+        public AnimationCurve SharedCurve { get; private set; } = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+
         public AnimationGroupInfo(AnimationGroupType type)
         {
             GroupType = type;
