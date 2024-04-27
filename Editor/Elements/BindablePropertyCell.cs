@@ -50,8 +50,8 @@ namespace Surge.Editor.Elements
             rightTop.style.flexShrink = 1f;
             
             inner
-                .WithBackgroundColor(new Color32(0x46, 0x46, 0x46, 0xFF))
-                .WithBorderColor(new Color32(0x1A, 0x1A, 0x1A, 0xFF))
+                .WithBackgroundColor((Color)new Color32(0x46, 0x46, 0x46, 0xFF))
+                .WithBorderColor((Color)new Color32(0x1A, 0x1A, 0x1A, 0xFF))
                 .WithBorderRadius(3f)
                 .WithBorderWidth(1f)
                 .WithPadding(5f);

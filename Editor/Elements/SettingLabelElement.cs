@@ -1,6 +1,4 @@
 ﻿using Surge.Editor.Extensions;
-using System.Runtime.InteropServices;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -37,12 +35,12 @@ namespace Surge.Editor.Elements
             this.tooltip = tooltip;
         }
 
-        public SettingLabelElement(string labelText, Color32 color) : this(labelText)
+        public SettingLabelElement(string labelText, Color color) : this(labelText)
         {
             _label.WithColor(color);
         }
 
-        public SettingLabelElement(string labelText, string tooltip, Color32 color) : this(labelText, tooltip)
+        public SettingLabelElement(string labelText, string tooltip, Color color) : this(labelText, tooltip)
         {
             _label.WithColor(color);
         }

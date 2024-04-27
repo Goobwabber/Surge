@@ -114,13 +114,13 @@ namespace Surge.Editor.Extensions
             return element;
         }
 
-        public static T WithFontStyle<T>(this T element, FontStyle fontStyle) where T : VisualElement
+        public static T WithFontStyle<T>(this T element, StyleEnum<FontStyle> fontStyle) where T : VisualElement
         {
             element.style.unityFontStyleAndWeight = fontStyle;
             return element;
         }
 
-        public static T WithFontSize<T>(this T element, float fontSize) where T : VisualElement
+        public static T WithFontSize<T>(this T element, StyleLength fontSize) where T : VisualElement
         {
             element.style.fontSize = fontSize;
             return element;
@@ -138,7 +138,7 @@ namespace Surge.Editor.Extensions
             return element;
         }
 
-        public static T WithPadding<T>(this T element, float padding) where T : VisualElement
+        public static T WithPadding<T>(this T element, StyleLength padding) where T : VisualElement
         {
             element.style.paddingTop = padding;
             element.style.paddingLeft = padding;
@@ -147,7 +147,7 @@ namespace Surge.Editor.Extensions
             return element;
         }
 
-        public static T WithBorderRadius<T>(this T element, float radius) where T : VisualElement
+        public static T WithBorderRadius<T>(this T element, StyleLength radius) where T : VisualElement
         {
             element.style.borderTopLeftRadius = radius;
             element.style.borderTopRightRadius = radius;
@@ -156,7 +156,7 @@ namespace Surge.Editor.Extensions
             return element;
         }
 
-        public static T WithMargin<T>(this T element, float margin) where T : VisualElement
+        public static T WithMargin<T>(this T element, StyleLength margin) where T : VisualElement
         {
             element.style.marginTop = margin;
             element.style.marginLeft = margin;
@@ -165,43 +165,49 @@ namespace Surge.Editor.Extensions
             return element;
         }
 
-        public static T WithMarginTop<T>(this T element, float marginTop) where T : VisualElement
+        public static T WithMarginTop<T>(this T element, StyleLength marginTop) where T : VisualElement
         {
             element.style.marginTop = marginTop;
             return element;
         }
         
-        public static T WithMarginLeft<T>(this T element, float marginLeft) where T : VisualElement
+        public static T WithMarginLeft<T>(this T element, StyleLength marginLeft) where T : VisualElement
         {
             element.style.marginLeft = marginLeft;
             return element;
         }
         
-        public static T WithWidth<T>(this T element, float width) where T : VisualElement
+        public static T WithWidth<T>(this T element, StyleLength width) where T : VisualElement
         {
             element.style.width = width;
             return element;
         }
+
+        public static T WithBasis<T>(this T element, StyleLength basis) where T : VisualElement
+        {
+            element.style.flexBasis = basis;
+            return element;
+        }
         
-        public static T WithGrow<T>(this T element, float grow) where T : VisualElement
+        public static T WithGrow<T>(this T element, StyleFloat grow) where T : VisualElement
         {
             element.style.flexGrow = grow;
             return element;
         }
         
-        public static T WithShrink<T>(this T element, float shrink) where T : VisualElement
+        public static T WithShrink<T>(this T element, StyleFloat shrink) where T : VisualElement
         {
             element.style.flexShrink = shrink;
             return element;
         }
         
-        public static T WithWrap<T>(this T element, Wrap wrap) where T : VisualElement
+        public static T WithWrap<T>(this T element, StyleEnum<Wrap> wrap) where T : VisualElement
         {
             element.style.flexWrap = wrap;
             return element;
         }
 
-        public static T WithBorderWidth<T>(this T element, float width) where T : VisualElement
+        public static T WithBorderWidth<T>(this T element, StyleFloat width) where T : VisualElement
         {
             element.style.borderTopWidth = width;
             element.style.borderLeftWidth = width;
@@ -210,7 +216,7 @@ namespace Surge.Editor.Extensions
             return element;
         }
 
-        public static T WithBorderColor<T>(this T element, Color color) where T : VisualElement
+        public static T WithBorderColor<T>(this T element, StyleColor color) where T : VisualElement
         {
             element.style.borderTopColor = color;
             element.style.borderLeftColor = color;
@@ -219,37 +225,37 @@ namespace Surge.Editor.Extensions
             return element;
         }
 
-        public static T WithBackgroundColor<T>(this T element, Color color) where T : VisualElement
+        public static T WithBackgroundColor<T>(this T element, StyleColor color) where T : VisualElement
         {
             element.style.backgroundColor = color;
             return element;
         }
-        
-        public static T WithColor<T>(this T element, Color color) where T : VisualElement
+
+        public static T WithColor<T>(this T element, StyleColor color) where T : VisualElement
         {
             element.style.color = color;
             return element;
         }
         
-        public static T WithHeight<T>(this T element, float height) where T : VisualElement
+        public static T WithHeight<T>(this T element, StyleLength height) where T : VisualElement
         {
             element.style.height = height;
             return element;
         }
         
-        public static T WithMinHeight<T>(this T element, float minHeight) where T : VisualElement
+        public static T WithMinHeight<T>(this T element, StyleLength minHeight) where T : VisualElement
         {
             element.style.minHeight = minHeight;
             return element;
         }
         
-        public static T WithMaxHeight<T>(this T element, float maxHeight) where T : VisualElement
+        public static T WithMaxHeight<T>(this T element, StyleLength maxHeight) where T : VisualElement
         {
             element.style.maxHeight = maxHeight;
             return element;
         }
 
-        public static T WithTextAlign<T>(this T element, TextAnchor align) where T : VisualElement
+        public static T WithTextAlign<T>(this T element, StyleEnum<TextAnchor> align) where T : VisualElement
         {
             element.style.unityTextAlign = align;
             return element;

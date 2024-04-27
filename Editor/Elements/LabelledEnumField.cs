@@ -13,7 +13,7 @@ namespace Surge.Editor.Elements
         private Label _label;
         private TextElement _value;
 
-        private Func<int, Color32>? _enumColorFunction;
+        private Func<int, Color>? _enumColorFunction;
         private EventCallback<ChangeEvent<Enum>>? _valueChangedColorCallback;
 
         public LabelledEnumField(Enum defaultValue, string label, SerializedProperty? property = null)
@@ -35,7 +35,7 @@ namespace Surge.Editor.Elements
             this.tooltip = tooltip;
         }
 
-        public LabelledEnumField(Enum defaultValue, string label, string tooltip, Func<int, Color32> enumColorFunction, SerializedProperty? property = null) : this(defaultValue, label, tooltip, property)
+        public LabelledEnumField(Enum defaultValue, string label, string tooltip, Func<int, Color> enumColorFunction, SerializedProperty? property = null) : this(defaultValue, label, tooltip, property)
         {
             _enumColorFunction = enumColorFunction;
             if (property is null)
