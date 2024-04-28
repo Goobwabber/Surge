@@ -155,6 +155,9 @@ namespace Surge.Editor.Windows
                     var color = pseudoProperty is null ? binding.Color : PropertyColorType.None;
                     var contextType = typeFilter.value is not null && typeFilter.value.IsAssignableFrom(binding.ContextType) ? typeFilter.value : binding.ContextType;
 
+                    // record so we can undo later
+                    Undo.RecordObject(property.serializedObject.targetObject, $"Set property data");
+
                     property.Property(nameof(AnimationPropertyInfo.Name)).SetValueNoRecord(propName);
                     property.Property(nameof(AnimationPropertyInfo.Path)).SetValueNoRecord(binding.Path);
                     property.Property(nameof(AnimationPropertyInfo.ValueType)).SetValueNoRecord(type);
