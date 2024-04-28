@@ -99,6 +99,8 @@ namespace Surge.Editor.Elements
             // Bind
             _propertyNameField.BindProperty(_nameProperty);
             _propertyNameField.RegisterValueChangedCallback(_ => CheckForIssues());
+            // only track the first value type property, bc they should all get updated at the same time :clueless:
+            this.TrackPropertyValue(_valueTypeProperty, _ => UpdateValueType());
 
             // Component Field
             _componentField.value = Type.GetType(_contextTypeProperty.stringValue);
@@ -111,7 +113,6 @@ namespace Surge.Editor.Elements
                     return;
                 _componentField.tooltip = $"The component type the target property is located on. ({evt.newValue.Name})";
                 _contextTypeProperty.SetValue(evt.newValue.AssemblyQualifiedName);
-                _contextTypeProperty.serializedObject.ApplyModifiedProperties();
                 CheckForIssues();
             });
 
@@ -123,41 +124,23 @@ namespace Surge.Editor.Elements
                 var type = Type.GetType(prop.stringValue);
                 _componentField.value = type;
                 _componentField.tooltip = "The component type the target property is located on." + type is not null ? $" ({type})" : string.Empty;
-            });
-
-            // Value Type Label
-            ValueTypeChanged();
-            CheckForIssues();
-            this.TrackPropertyValue(_valueTypeProperty, _ => ValueTypeChanged());
-            this.TrackPropertyValue(_colorTypeProperty, _ => ValueTypeChanged());
-            this.TrackPropertyValue(_objectTypeProperty, _ => ValueTypeChanged());
-            void ValueTypeChanged()
-            {
-                var valueType = (PropertyValueType)_valueTypeProperty.enumValueIndex;
-                var colorType = (PropertyColorType)_colorTypeProperty.enumValueIndex;
-                var objectType = _objectTypeProperty.stringValue;
-                _propertyTypeLabel.Value = GetPropertyTypeName(valueType, colorType, objectType);
-
-                if (_firstArrayItem)
-                {
-                    _sharedValueTypeProperty.SetValue(valueType);
-                    _sharedColorTypeProperty.SetValue(colorType);
-                    _sharedObjectTypeProperty.SetValue(objectType);
-                }
-
                 CheckForIssues();
-            }
+            });
 
             // Search Button
             _searchButton.clicked -= _selector;
             _selector = () =>
             {
-                this.Focus();
+                this.Focus(); // make ew ew ugly selection go away
                 if (_bindingService is null)
                     return; // HOW??
                 ShowPropertyWindow(property, _bindingService);
             };
             _searchButton.clicked += _selector;
+
+            // Update things on ui load
+            UpdateTargetObjects();
+            UpdateValueType();
         }
 
         public void SetData(
@@ -167,6 +150,9 @@ namespace Surge.Editor.Elements
             BindingService? bindingService,
             AnimationGroupType type)
         {
+            // unbind (SetData runs before SetBinding)
+            this.Unbind();
+
             // set props
             _sharedValueTypeProperty = groupProperty.Property(nameof(AnimationGroupInfo.SharedValueType));
             _sharedColorTypeProperty = groupProperty.Property(nameof(AnimationGroupInfo.SharedColorType));
@@ -177,24 +163,41 @@ namespace Surge.Editor.Elements
             _firstArrayItem = firstArrayItem;
             _bindingService = bindingService;
 
-            // update target objects
-            UpdateTargetObjects();
-            this.TrackPropertyValue(objectsProperty, _ => UpdateTargetObjects());
-            void UpdateTargetObjects()
+            // bindings
+            // schedule the UpdateTargetObjects call, so that it doesnt execute before bindingService has been updated.
+            this.TrackPropertyValue(objectsProperty, _ => this.schedule.Execute(UpdateTargetObjects));
+            // only track the first value type property, bc they should all get updated at the same time :clueless:
+            this.TrackPropertyValue(_sharedValueTypeProperty!, prop => CheckForIssues());
+        }
+
+        private void UpdateTargetObjects()
+        {
+            if (_bindingService is null)
+                return;
+            _ = _bindingService.TryGetSearchableObjects(out GameObject[]? objects);
+            if (objects is not null)
+                _componentField.Push(objects); // we dont care if get fails as long as not null
+            CheckForIssues();
+        }
+
+        private void UpdateValueType()
+        {
+            var valueType = (PropertyValueType)_valueTypeProperty.enumValueIndex;
+            var colorType = (PropertyColorType)_colorTypeProperty.enumValueIndex;
+            var objectType = _objectTypeProperty.stringValue;
+            _propertyTypeLabel.Value = GetPropertyTypeName(valueType, colorType, objectType);
+
+            if (_firstArrayItem)
             {
-                if (bindingService is null)
-                    return;
-                _ = bindingService.TryGetSearchableObjects(out GameObject[]? objects);
-                if (objects is not null)
-                    _componentField.Push(objects); // we dont care if get fails as long as not null
-                CheckForIssues();
+                // update all of these at the same time.
+                _sharedValueTypeProperty.SetValueNoRecord(valueType);
+                _sharedColorTypeProperty.SetValueNoRecord(colorType);
+                _sharedObjectTypeProperty.SetValueNoRecord(objectType);
+                EditorUtility.SetDirty(_sharedValueTypeProperty.serializedObject.targetObject);
+                _sharedValueTypeProperty.serializedObject.ApplyModifiedProperties();
             }
 
-            // update shared value type
             CheckForIssues();
-            this.TrackPropertyValue(_sharedValueTypeProperty!, prop => CheckForIssues());
-            this.TrackPropertyValue(_sharedColorTypeProperty!, prop => CheckForIssues());
-            this.TrackPropertyValue(_sharedObjectTypeProperty!, prop => CheckForIssues());
         }
 
         private void CheckForIssues()
@@ -226,10 +229,13 @@ namespace Surge.Editor.Elements
                 _propertyTypeLabel.Visible(false);
                 _issueIndicator.tooltip = $"Animatable property with name \"{name}\" not found on any components of type \"{contextType?.Name ?? "<null>"}\".";
 
-                // didnt find property so murder value types before return
-                _valueTypeProperty.SetValue(PropertyValueType.Boolean);
-                _colorTypeProperty.SetValue(PropertyColorType.None);
-                _objectTypeProperty.SetValue(string.Empty);
+                // didnt find property so murder value types before return (and apply them at the same time)
+                // Note: I commented out this code because i think its a better experience for the user if we dont do it
+                //_valueTypeProperty.SetValueNoRecord(PropertyValueType.Boolean);
+                //_colorTypeProperty.SetValueNoRecord(PropertyColorType.None);
+                //_objectTypeProperty.SetValueNoRecord(string.Empty);
+                //EditorUtility.SetDirty(_valueTypeProperty.serializedObject.targetObject);
+                //_valueTypeProperty.serializedObject.ApplyModifiedProperties();
                 return;
             }
 
@@ -240,9 +246,11 @@ namespace Surge.Editor.Elements
                 && string.CompareOrdinal(_sharedObjectTypeProperty.stringValue, _objectTypeProperty.stringValue) == 0;
 
             // property path IS valid, so we should go ahead and take the type values from it
-            _valueTypeProperty.SetValue(binding!.Type);
-            _colorTypeProperty.SetValue(binding!.Color);
-            _objectTypeProperty.SetValue(binding!.GetPseudoProperty(0).Type.AssemblyQualifiedName);
+            _valueTypeProperty.SetValueNoRecord(binding!.Type);
+            _colorTypeProperty.SetValueNoRecord(binding!.Color);
+            _objectTypeProperty.SetValueNoRecord(binding!.GetPseudoProperty(0).Type.AssemblyQualifiedName);
+            EditorUtility.SetDirty(_valueTypeProperty.serializedObject.targetObject);
+            _valueTypeProperty.serializedObject.ApplyModifiedProperties();
 
             if (!equivalentTypes)
             {

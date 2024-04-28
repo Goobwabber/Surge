@@ -155,11 +155,11 @@ namespace Surge.Editor.Windows
                     var color = pseudoProperty is null ? binding.Color : PropertyColorType.None;
                     var contextType = typeFilter.value is not null && typeFilter.value.IsAssignableFrom(binding.ContextType) ? typeFilter.value : binding.ContextType;
 
-                    property.Property(nameof(AnimationPropertyInfo.Name)).SetValue(propName);
-                    property.Property(nameof(AnimationPropertyInfo.Path)).SetValue(binding.Path);
-                    property.Property(nameof(AnimationPropertyInfo.ValueType)).SetValue(type);
-                    property.Property(nameof(AnimationPropertyInfo.ColorType)).SetValue(color);
-                    property.Property(nameof(AnimationPropertyInfo.ContextType)).SetValue(contextType.AssemblyQualifiedName!);
+                    property.Property(nameof(AnimationPropertyInfo.Name)).SetValueNoRecord(propName);
+                    property.Property(nameof(AnimationPropertyInfo.Path)).SetValueNoRecord(binding.Path);
+                    property.Property(nameof(AnimationPropertyInfo.ValueType)).SetValueNoRecord(type);
+                    property.Property(nameof(AnimationPropertyInfo.ColorType)).SetValueNoRecord(color);
+                    property.Property(nameof(AnimationPropertyInfo.ContextType)).SetValueNoRecord(contextType.AssemblyQualifiedName!);
 
                     float? predictiveValue = null;
                     
@@ -177,25 +177,29 @@ namespace Surge.Editor.Windows
                             
                             defaultValue = (float)defaultValue;
                             defaultValue = predictiveValue ?? defaultValue;
-                            property.Property(nameof(AnimationPropertyInfo.DefaultAnalog)).SetValue(defaultValue);
+                            property.Property(nameof(AnimationPropertyInfo.DefaultAnalog)).SetValueNoRecord(defaultValue);
                             break;
                         }
                         case PropertyValueType.Vector2 or PropertyValueType.Vector3 or PropertyValueType.Vector4:
                         {
                             var defaultValue = (Vector4)binder.GetPropertyValue(binding);
-                            property.Property(nameof(AnimationPropertyInfo.DefaultVector)).SetValue(defaultValue);
+                            property.Property(nameof(AnimationPropertyInfo.DefaultVector)).SetValueNoRecord(defaultValue);
                             break;
                         }
                         case PropertyValueType.Object:
                         {
                             var defaultValue = (UnityEngine.Object)binder.GetPropertyValue(binding);
-                            property.Property(nameof(AnimationPropertyInfo.DefaultObject)).SetValue(defaultValue);
+                            property.Property(nameof(AnimationPropertyInfo.DefaultObject)).SetValueNoRecord(defaultValue);
                             var objectType = binding.GetPseudoProperty(0).Type;
-                            property.Property(nameof(AnimationPropertyInfo.ObjectValueType)).SetValue(objectType.AssemblyQualifiedName);
+                            property.Property(nameof(AnimationPropertyInfo.ObjectValueType)).SetValueNoRecord(objectType.AssemblyQualifiedName);
                             break;
                         }
                     }
-                    
+
+                    // apply the stuffs 
+                    EditorUtility.SetDirty(property.serializedObject.targetObject);
+                    property.serializedObject.ApplyModifiedProperties();
+
                     Close();
                 }
 
