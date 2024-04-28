@@ -55,6 +55,9 @@ namespace Surge
                     if (item == null)
                         continue;
 
+                    if (item is not Component && item is not GameObject)
+                        continue; // this can happen briefly, technically
+
                     SearchTransform(root, item is Component c ? c.transform : ((GameObject)item).transform, item, references);
                 }
             }

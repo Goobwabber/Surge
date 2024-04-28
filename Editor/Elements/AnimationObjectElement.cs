@@ -3,6 +3,7 @@ using Surge.Editor.Models;
 using Surge.Models;
 using UnityEditor;
 using UnityEditor.UIElements;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Surge.Editor.Elements
@@ -46,6 +47,8 @@ namespace Surge.Editor.Elements
 
         private void ObjectFieldValueChanged(ChangeEvent<UnityEngine.Object> evt)
         {
+            if (evt.newValue is not GameObject and not Component)
+                _objectField.value = null;
             _componentField.Visible(evt.newValue != null && _groupType is AnimationGroupType.ObjectToggle);
             _componentField.Push(evt.newValue);
         }
