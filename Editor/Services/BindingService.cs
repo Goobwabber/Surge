@@ -166,22 +166,42 @@ namespace Surge.Editor.Services
             return true;
         }
 
-        public bool TryGetPropertyBinding(Type? contextType, string name, out SurgeProperty? value)
+        public bool TryGetPropertyBinding(Type? contextType, string name, out SurgeProperty? value, out bool pseudo)
         {
+            pseudo = false;
             value = null;
             if (contextType == null)
                 return false;
             var bindingId = contextType.Name + name;
+            if (name.Length < 2)
+                return false; // I mean, if someone happens to find a property with less than two characters, @ me and i'll fix this i guess...
+            var pseudoIndex = name[^2..^0] switch
+            {
+                ".x" or ".r" => 0,
+                ".y" or ".g" => 1,
+                ".z" or ".b" => 2,
+                ".w" or ".a" => 3,
+                _ => -1,
+            };
+            var isColorPseudo = name[^1] is 'r' or 'g' or 'b' or 'a';
+            pseudo = pseudoIndex != -1;
             if (_validatedBindings.TryGetValue(bindingId, out value))
                 return true;
+            var propName = pseudo ? name[..^2] : name;
             // this could be faster if we do a lazy search instead of a full search and then cache the results to build on later
             var properties = GetPropertyBindings();
             foreach (var property in properties)
             {
                 if (!contextType.IsAssignableFrom(property.ContextType))
                     continue;
-                if (string.CompareOrdinal(property.Name, name) != 0)
+                if (string.CompareOrdinal(property.Name, propName) != 0)
                     continue;
+                if (property.PseudoProperties?.Count <= pseudoIndex)
+                    continue; // maybe should return here, we found the prop but the pseudo prop didnt exist.
+                if (pseudo && property.Type is not (PropertyValueType.Vector2 or PropertyValueType.Vector3 or PropertyValueType.Vector4))
+                    continue; // types do not match.
+                if (pseudo && !(isColorPseudo == property.Color is not PropertyColorType.None))
+                    continue; // color types do not match.
                 _validatedBindings.Add(bindingId, property);
                 value = property;
                 return true;

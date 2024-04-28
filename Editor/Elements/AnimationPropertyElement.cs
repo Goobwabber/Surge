@@ -222,7 +222,7 @@ namespace Surge.Editor.Elements
 
             var contextType = _componentField.value;
             // TODO: make asynchronous :plead:
-            if (!_bindingService.TryGetPropertyBinding(contextType, name, out SurgeProperty binding))
+            if (!_bindingService.TryGetPropertyBinding(contextType, name, out SurgeProperty binding, out bool pseudo))
             {
                 _issueIndicator.style.backgroundImage = SurgeUI.GetWarningImage();
                 _issueIndicator.Visible(true);
@@ -246,8 +246,8 @@ namespace Surge.Editor.Elements
                 && string.CompareOrdinal(_sharedObjectTypeProperty.stringValue, _objectTypeProperty.stringValue) == 0;
 
             // property path IS valid, so we should go ahead and take the type values from it
-            _valueTypeProperty.SetValueNoRecord(binding!.Type);
-            _colorTypeProperty.SetValueNoRecord(binding!.Color);
+            _valueTypeProperty.SetValueNoRecord(!pseudo ? binding!.Type : PropertyValueType.Float);
+            _colorTypeProperty.SetValueNoRecord(!pseudo ? binding!.Color : PropertyColorType.None);
             _objectTypeProperty.SetValueNoRecord(binding!.GetPseudoProperty(0).Type.AssemblyQualifiedName);
             EditorUtility.SetDirty(_valueTypeProperty.serializedObject.targetObject);
             _valueTypeProperty.serializedObject.ApplyModifiedProperties();
