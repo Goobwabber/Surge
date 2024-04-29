@@ -141,8 +141,8 @@ namespace Surge.Editor.Elements
             _searchButton.clicked += _selector;
 
             // Update things on ui load
-            UpdateTargetObjects();
-            UpdateValueType();
+            this.schedule.Execute(UpdateTargetObjects);
+            this.schedule.Execute(UpdateValueType);
         }
 
         public void SetData(
@@ -244,18 +244,18 @@ namespace Surge.Editor.Elements
                 return;
             }
 
+            // property path IS valid, so we should go ahead and take the type values from it
+            _valueTypeProperty.SetValueNoRecord(!pseudo ? binding!.Type : PropertyValueType.Float);
+            _colorTypeProperty.SetValueNoRecord(!pseudo ? binding!.Color : PropertyColorType.None);
+            _objectTypeProperty.SetValueNoRecord(binding!.ObjectType?.AssemblyQualifiedName ?? string.Empty);
+            EditorUtility.SetDirty(_valueTypeProperty.serializedObject.targetObject);
+            _valueTypeProperty.serializedObject.ApplyModifiedProperties();
+
             // *technically* dont need to check color type... should i let the users go wild?
             // pain in the ass to try to change vectors using a color field and vice versa anyways.
             var equivalentTypes = _sharedValueTypeProperty.enumValueIndex == _valueTypeProperty.enumValueIndex
                 && _sharedColorTypeProperty.enumValueIndex == _colorTypeProperty.enumValueIndex
                 && string.CompareOrdinal(_sharedObjectTypeProperty.stringValue, _objectTypeProperty.stringValue) == 0;
-
-            // property path IS valid, so we should go ahead and take the type values from it
-            _valueTypeProperty.SetValueNoRecord(!pseudo ? binding!.Type : PropertyValueType.Float);
-            _colorTypeProperty.SetValueNoRecord(!pseudo ? binding!.Color : PropertyColorType.None);
-            _objectTypeProperty.SetValueNoRecord(binding!.GetPseudoProperty(0).Type.AssemblyQualifiedName);
-            EditorUtility.SetDirty(_valueTypeProperty.serializedObject.targetObject);
-            _valueTypeProperty.serializedObject.ApplyModifiedProperties();
 
             if (!equivalentTypes)
             {

@@ -100,7 +100,7 @@ namespace Surge.Editor.Elements
             _exclusionsLabel.tooltip = "The objects to be excluded from this avatar-wide animation.";
 
             _toggleField = new LabelledEnumField(AnimationToggleType.TurnOn, "When Active: ",
-                "Whether to enable these objects or disable them when the menu item is active.",
+                "Whether to enable these objects or disable them when the menu item is active. When the menu item is inactive, it will do the opposite of this.",
                 value => value == (int)AnimationToggleType.TurnOff ? SurgeUI.DisabledColor : SurgeUI.EnabledColor);
             _toggleField.style.width = 160f;
 
@@ -337,7 +337,6 @@ namespace Surge.Editor.Elements
             _objectsLabel.Visible(_groupType is AnimationGroupType.Normal || _groupType is AnimationGroupType.ObjectToggle && menuType is not MenuItemType.Toggle and not MenuItemType.Button);
             _exclusionsLabel.Visible(_groupType is AnimationGroupType.Avatar);
             _toggleField.Visible(_groupType is AnimationGroupType.ObjectToggle && menuType is MenuItemType.Toggle or MenuItemType.Button);
-            _statesField.Visible(_groupType is AnimationGroupType.Normal or AnimationGroupType.Avatar || _groupType is AnimationGroupType.ObjectToggle && menuType is not MenuItemType.Toggle and not MenuItemType.Button);
             _propertiesContainer.Visible(_groupType is not AnimationGroupType.ObjectToggle);
 
             _statesField.SetMaxLength(menuType switch
@@ -393,7 +392,8 @@ namespace Surge.Editor.Elements
                     _curveLabel.Visible(curveFieldVisible);
                     _curveFieldLabel.Visible(curveFieldVisible);
                     _curveField.Visible(curveFieldVisible);
-                    _statesField.Visible(!curveFieldVisible);
+                    _statesField.Visible(!curveFieldVisible && _groupType is not AnimationGroupType.ObjectToggle 
+                        || _groupType is AnimationGroupType.ObjectToggle && menuType is not (MenuItemType.Toggle or MenuItemType.Button));
                 }
             }
         }

@@ -256,6 +256,9 @@ namespace Surge.Editor.Elements
             var colorType = (PropertyColorType)_colorTypeProperty.enumValueIndex;
             var isColor = colorType is not PropertyColorType.None;
 
+            if ((int)valueType is -1 || (int)colorType is -1)
+                return;
+
             _toggleField.Visible(false);
             _integerField.Visible(false);
             _floatField.Visible(false);

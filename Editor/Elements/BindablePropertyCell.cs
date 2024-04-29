@@ -21,6 +21,7 @@ namespace Surge.Editor.Elements
         //private readonly Label _propertyTypeText;
         private readonly TextField _textField;
         private readonly ColorField _colorField;
+        private readonly ObjectField _objectField;
         
         private readonly Button _selectButton;
 
@@ -62,19 +63,26 @@ namespace Surge.Editor.Elements
             rightTop.style.flexShrink = 1f;
 
             var nameHorizontal = leftSide.CreateHorizontal();
-            _propertyTypeLabel = new SettingLabelElement("", 16f).WithFontSize(10f);
+            _propertyTypeLabel = new SettingLabelElement("", 16f).WithFontSize(10f).WithShrink(0f);
             nameHorizontal.Add(_propertyTypeLabel);
-            _propertyNameLabel = nameHorizontal.CreateLabel();
+            _propertyNameLabel = nameHorizontal.CreateLabel().WithShrink(1f);
             _propertyNameLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
+            _propertyNameLabel.style.overflow = Overflow.Hidden;
+            _propertyNameLabel.style.textOverflow = TextOverflow.Ellipsis;
             _propertyContextLabel = leftSide.CreateSurgeLabel().WithFontSize(8f);
 
             //_propertyTypeText = rightTop.CreateLabel();
-            _textField = new TextField();
+            _textField = new TextField().WithShrink(1f);
             _textField.SetEnabled(false);
             _textField.style.width = 115f;
             _textField.Q<TextElement>().WithTextAlign(TextAnchor.MiddleRight).WithFontSize(9f);
 
-            _colorField = new ColorField();
+            _objectField = new ObjectField().WithShrink(1f);
+            _objectField.SetEnabled(false);
+            _objectField.style.width = 115f;
+
+            _colorField = new ColorField().WithShrink(1f);
+            //_colorField.SetEnabled(false);
             _colorField.RegisterValueChangedCallback(_ =>
             {
                 _colorField.SetValueWithoutNotify(_currentColorValue);
@@ -84,6 +92,7 @@ namespace Surge.Editor.Elements
             
             rightTop.Add(_colorField);
             rightTop.Add(_textField);
+            rightTop.Add(_objectField);
             
             _selectButton = new Button
             {
@@ -106,7 +115,7 @@ namespace Surge.Editor.Elements
                 style =
                 {
                     backgroundImage = _paneOptionsImage,
-                    width = 10f,
+                    minWidth = 10f,
                     height = 20f
                 }
             };
@@ -119,6 +128,14 @@ namespace Surge.Editor.Elements
             });
             
             menu.AddManipulator(contextualMenuManipulator);
+
+            var rightClickManipulator = new ContextualMenuManipulator(ModifyContextMenu);
+            rightClickManipulator.activators.Add(new ManipulatorActivationFilter()
+            {
+                button = MouseButton.RightMouse
+            });
+
+            this.AddManipulator(rightClickManipulator);
 
             inner.Add(leftSide);
             inner.Add(rightSide);
@@ -164,7 +181,7 @@ namespace Surge.Editor.Elements
             
             _propertyContextLabel.tooltip = property.Path;
 
-            var valueString = currentValue.ToString();
+            var valueString = currentValue?.ToString() ?? "<null>";
             _textField.value = valueString;
 
             _onSelect = onSelect;
@@ -184,6 +201,12 @@ namespace Surge.Editor.Elements
                 _colorField.value = _currentColorValue;
             }
 
+            if (property.Type is PropertyValueType.Object && currentValue is UnityEngine.Object objectValue)
+            {
+                _objectField.value = objectValue;
+                _objectField.objectType = property.ObjectType;
+            }
+
             var isVector = property.Type
                 is PropertyValueType.Vector2
                 or PropertyValueType.Vector3
@@ -195,8 +218,9 @@ namespace Surge.Editor.Elements
             _onVectorW = onVectorW;
             
             _textField.Q<TextElement>().WithFontSize(isVector ? 9f : 12f);
-            _textField.style.display = _isColor ? DisplayStyle.None : DisplayStyle.Flex;
-            _colorField.style.display = _isColor ? DisplayStyle.Flex : DisplayStyle.None;
+            _textField.Visible(!_isColor && property.Type is not PropertyValueType.Object);
+            _colorField.Visible(_isColor && property.Type is not PropertyValueType.Object);
+            _objectField.Visible(property.Type is PropertyValueType.Object);
             
             _onJump = onJump;
         }

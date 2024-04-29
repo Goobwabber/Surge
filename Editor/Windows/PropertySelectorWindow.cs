@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Globalization;
 using System.Linq;
 using Surge.Editor.Elements;
 using Surge.Editor.Extensions;
@@ -224,7 +223,6 @@ namespace Surge.Editor.Windows
                     // apply the stuffs 
                     EditorUtility.SetDirty(property.serializedObject.targetObject);
                     property.serializedObject.ApplyModifiedProperties();
-                    Debug.Log(property.Property(nameof(AnimationPropertyInfo.Name)).GetValue());
 
                     // check if we are keeping window open, and if so schedule switching the property
                     if (keepOpen)
@@ -301,8 +299,8 @@ namespace Surge.Editor.Windows
                 var materialsOnly = search.Contains("t:Material");
                 var blendshapesOnly = search.Contains("t:Blendshape");
                 var valueTypeString = search.Split(' ').FirstOrDefault(s => s.Length > 1 && string.CompareOrdinal(s[..2], "v:") == 0);
-                var valueTypeFilter = PropertyValueType.Boolean;
-                var colorTypeFilter = PropertyColorType.None;
+                var valueTypeFilter = ValueTypeFilter.Boolean;
+                var colorTypeFilter = ColorTypeFilter.None;
                 var objectTypeFilter = string.Empty;
                 var valueTypeOnly = !string.IsNullOrEmpty(valueTypeString) && TryGetPropertyType(valueTypeString[2..], out valueTypeFilter, out colorTypeFilter, out objectTypeFilter);
                 if (valueTypeOnly)
@@ -328,8 +326,8 @@ namespace Surge.Editor.Windows
                         if (blendshapesOnly && source is not SurgePropertySource.Blendshape)
                             continue;
 
-                        if (valueTypeOnly && valueTypeFilter != group.Type || // value type does not match
-                            colorTypeFilter != group.Color || // color type does not match
+                        if (valueTypeOnly && !valueTypeFilter.HasType(group.Type) || // value type does not match
+                            !colorTypeFilter.HasType(group.Color) || // color type does not match
                             !string.IsNullOrEmpty(objectTypeFilter) && string.Compare(group.ObjectType.Name, objectTypeFilter, StringComparison.OrdinalIgnoreCase) != 0)
                             continue;
 
@@ -424,31 +422,34 @@ namespace Surge.Editor.Windows
             }
         }
 
-        private static bool TryGetPropertyType(string name, out PropertyValueType valueType, out PropertyColorType colorType, out string objectTypeName)
+        private static bool TryGetPropertyType(string name, out ValueTypeFilter valueType, out ColorTypeFilter colorType, out string objectTypeName)
         {
             objectTypeName = string.Empty;
             var lowercase = name.ToLower();
 
             valueType = lowercase switch
             {
-                "bool" => PropertyValueType.Boolean,
-                "int" => PropertyValueType.Integer,
-                "float" => PropertyValueType.Float,
-                "vector2" => PropertyValueType.Vector2,
-                "vector3" or "rgb" or "hdr" => PropertyValueType.Vector3,
-                "vector4" or "rgba" or "hdra" => PropertyValueType.Vector4,
-                "object" => PropertyValueType.Object,
-                _ => PropertyValueType.Object,
+                "bool" => ValueTypeFilter.Boolean,
+                "int" => ValueTypeFilter.Integer,
+                "float" => ValueTypeFilter.Float,
+                "vector2" => ValueTypeFilter.Vector2,
+                "vector3" or "rgb" or "hdr" => ValueTypeFilter.Vector3,
+                "vector4" or "rgba" or "hdra" => ValueTypeFilter.Vector4,
+                "vector" => ValueTypeFilter.Vector,
+                "color" => ValueTypeFilter.Color,
+                "object" => ValueTypeFilter.Object,
+                _ => ValueTypeFilter.Object,
             };
 
             colorType = lowercase switch
             {
-                "rgb" or "rgba" => PropertyColorType.RGB,
-                "hdr" or "hdra" => PropertyColorType.HDR,
-                _ => PropertyColorType.None,
+                "rgb" or "rgba" => ColorTypeFilter.RGB,
+                "hdr" or "hdra" => ColorTypeFilter.HDR,
+                "color" => ColorTypeFilter.Color,
+                _ => ColorTypeFilter.None,
             };
 
-            if (valueType is PropertyValueType.Object && lowercase != "object")
+            if (valueType is ValueTypeFilter.Object && lowercase != "object")
                 objectTypeName = lowercase;
 
             return true; // because we allow searching for object types, this method will never fail. keeping this here just in case though.
