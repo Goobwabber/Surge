@@ -15,8 +15,9 @@ namespace Surge.Editor.Elements
         
         private readonly Label _propertyNameLabel;
         private readonly Label _propertyContextLabel;
+        private readonly SettingLabelElement _propertyTypeLabel;
 
-        private Action? _onSelect;
+        private Action<bool>? _onSelect;
         //private readonly Label _propertyTypeText;
         private readonly TextField _textField;
         private readonly ColorField _colorField;
@@ -58,8 +59,12 @@ namespace Surge.Editor.Elements
 
             leftSide.style.flexGrow = 1f;
             rightTop.style.flexShrink = 1f;
-            
-            _propertyNameLabel = leftSide.CreateLabel();
+
+            var nameHorizontal = leftSide.CreateHorizontal();
+            _propertyTypeLabel = new SettingLabelElement("", 16f).WithFontSize(10f);
+            nameHorizontal.Add(_propertyTypeLabel);
+            _propertyNameLabel = nameHorizontal.CreateLabel();
+            _propertyNameLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
             _propertyContextLabel = leftSide.CreateSurgeLabel().WithFontSize(8f);
 
             //_propertyTypeText = rightTop.CreateLabel();
@@ -84,6 +89,17 @@ namespace Surge.Editor.Elements
                 text = "Set",
                 style = { width = 40f }
             };
+            _selectButton.clickable.activators.Add(new ManipulatorActivationFilter
+            {
+                button = MouseButton.LeftMouse,
+                modifiers = EventModifiers.Shift
+            });
+            _selectButton.clickable.clickedWithEventInfo += evt =>
+            {
+                if (evt is MouseUpEvent mouseUpEvent)
+                    _onSelect(mouseUpEvent.modifiers.HasFlag(EventModifiers.Shift));
+            };
+
             VisualElement menu = new()
             {
                 style =
@@ -136,9 +152,10 @@ namespace Surge.Editor.Elements
             }
         }
 
-        public void SetData(SurgeProperty property, object currentValue, Action onSelect, Action? onJump,
+        public void SetData(SurgeProperty property, object currentValue, Action<bool> onSelect, Action? onJump,
             Action? onVectorX, Action? onVectorY, Action? onVectorZ, Action? onVectorW, bool includePath)
         {
+            _propertyTypeLabel.Value = SurgeUI.GetPropertyTypeName(property.Type, property.Color, property.GetPseudoProperty(0).Type);
             _propertyNameLabel.text = $"<b>{property.Name}</b>";
             _propertyContextLabel.text = $"{property.ContextType.Name}";
             if (includePath)
@@ -149,8 +166,6 @@ namespace Surge.Editor.Elements
             var valueString = currentValue.ToString();
             _textField.value = valueString;
 
-            _selectButton.clicked -= _onSelect;
-            _selectButton.clicked += onSelect;
             _onSelect = onSelect;
 
             _isColor = property.Color is not PropertyColorType.None;

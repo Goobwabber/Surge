@@ -185,7 +185,7 @@ namespace Surge.Editor.Elements
             var valueType = (PropertyValueType)_valueTypeProperty.enumValueIndex;
             var colorType = (PropertyColorType)_colorTypeProperty.enumValueIndex;
             var objectType = _objectTypeProperty.stringValue;
-            _propertyTypeLabel.Value = GetPropertyTypeName(valueType, colorType, objectType);
+            _propertyTypeLabel.Value = SurgeUI.GetPropertyTypeName(valueType, colorType, objectType);
 
             if (_firstArrayItem)
             {
@@ -257,11 +257,11 @@ namespace Surge.Editor.Elements
                 var valueType = (PropertyValueType)_valueTypeProperty.enumValueIndex;
                 var colorType = (PropertyColorType)_colorTypeProperty.enumValueIndex;
                 var objectType = _objectTypeProperty.stringValue;
-                var typeName = GetPropertyTypeName(valueType, colorType, objectType);
+                var typeName = SurgeUI.GetPropertyTypeName(valueType, colorType, objectType);
                 var sharedValueType = (PropertyValueType)_sharedValueTypeProperty.enumValueIndex;
                 var sharedColorType = (PropertyColorType)_sharedColorTypeProperty.enumValueIndex;
                 var sharedObjectType = _sharedObjectTypeProperty.stringValue;
-                var sharedTypeName = GetPropertyTypeName(sharedValueType, sharedColorType, sharedObjectType);
+                var sharedTypeName = SurgeUI.GetPropertyTypeName(sharedValueType, sharedColorType, sharedObjectType);
                 _issueIndicator.style.backgroundImage = SurgeUI.GetErrorImage();
                 _propertyTypeLabel.Visible(true);
                 _issueIndicator.Visible(true);
@@ -279,26 +279,6 @@ namespace Surge.Editor.Elements
                 return;
             
             PropertySelectorWindow.Present(property, bindingService);
-        }
-
-        private static string GetPropertyTypeName(PropertyValueType valueType, PropertyColorType colorType, string objectType)
-        {
-            return valueType switch
-            {
-                PropertyValueType.Boolean => "Bool",
-                PropertyValueType.Integer => "Int",
-                PropertyValueType.Float => "Float",
-                PropertyValueType.Vector2 => "Vector2",
-                PropertyValueType.Vector3 or PropertyValueType.Vector4 => colorType switch
-                {
-                    PropertyColorType.None => valueType is PropertyValueType.Vector3 ? "Vector3" : "Vector4",
-                    PropertyColorType.RGB => valueType is PropertyValueType.Vector3 ? "RGB" : "RGBA",
-                    PropertyColorType.HDR => valueType is PropertyValueType.Vector3 ? "HDR" : "HDRA",
-                    _ => "<null>",
-                },
-                PropertyValueType.Object => Type.GetType(objectType)?.Name ?? "Object",
-                _ => "<null>",
-            };
         }
     }
 }

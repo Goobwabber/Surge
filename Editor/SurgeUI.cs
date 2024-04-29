@@ -1,4 +1,6 @@
-﻿using UnityEditor;
+﻿using Surge.Models;
+using System;
+using UnityEditor;
 using UnityEngine;
 
 namespace Surge.Editor
@@ -63,6 +65,29 @@ namespace Surge.Editor
                 return _searchImage!;
             _searchImage = (Texture2D)EditorGUIUtility.IconContent("Search Icon").image;
             return _searchImage;
+        }
+
+        public static string GetPropertyTypeName(PropertyValueType valueType, PropertyColorType colorType, string objectType)
+            => GetPropertyTypeName(valueType, colorType, Type.GetType(objectType));
+
+        public static string GetPropertyTypeName(PropertyValueType valueType, PropertyColorType colorType, Type? objectType)
+        {
+            return valueType switch
+            {
+                PropertyValueType.Boolean => "Bool",
+                PropertyValueType.Integer => "Int",
+                PropertyValueType.Float => "Float",
+                PropertyValueType.Vector2 => "Vector2",
+                PropertyValueType.Vector3 or PropertyValueType.Vector4 => colorType switch
+                {
+                    PropertyColorType.None => valueType is PropertyValueType.Vector3 ? "Vector3" : "Vector4",
+                    PropertyColorType.RGB => valueType is PropertyValueType.Vector3 ? "RGB" : "RGBA",
+                    PropertyColorType.HDR => valueType is PropertyValueType.Vector3 ? "HDR" : "HDRA",
+                    _ => "<null>",
+                },
+                PropertyValueType.Object => objectType?.Name ?? "Object",
+                _ => "<null>",
+            };
         }
     }
 }

@@ -63,7 +63,7 @@ namespace Surge.Editor.Windows
                 .Property(nameof(SurgeControl.AnimationGroupCollection))!;
 
             // Writing this makes me uncomfortable... Unity Editor dev is pain.
-            var propertyGroups = ((AnimationGroupCollectionInfo)groupsProperty.boxedValue).Groups;
+            var animationGroups = ((AnimationGroupCollectionInfo)groupsProperty.boxedValue).Groups;
             
             // Use the property path to find the index of the Property Group
             // In my opinion, this is pretty cursed, but it's guaranteed to work.
@@ -73,9 +73,11 @@ namespace Surge.Editor.Windows
             var groupIndexString = pathSpan.Slice(startBracketIndex + 1, endingBracketIndex - startBracketIndex - 1);
             var groupIndex = int.Parse(groupIndexString);
 
-            var propertyGroup = propertyGroups[groupIndex];
+            var animationGroup = animationGroups[groupIndex];
+            var groupsArrayProperty = groupsProperty.Property(nameof(AnimationGroupCollectionInfo.Groups)).Field("Array");
+            var groupProperty = groupsArrayProperty.GetArrayElementAtIndex(groupIndex);
 
-            var objects = propertyGroup.Objects.Select(o => o is Component c ? c.gameObject : o is GameObject g ? g : null).ToArray();
+            var objects = animationGroup.Objects.Select(o => o is Component c ? c.gameObject : o is GameObject g ? g : null).ToArray();
 
             var typeFilterLabel = new Label("Target Type:").WithPadding(3f);
             typeFilterLabel.style.marginLeft = StyleKeyword.Auto;
@@ -89,7 +91,7 @@ namespace Surge.Editor.Windows
             headingGroup.Add(typeFilterLabel);
             headingGroup.Add(typeFilter);
 
-            if (propertyGroup.GroupType is AnimationGroupType.ObjectToggle)
+            if (animationGroup.GroupType is AnimationGroupType.ObjectToggle)
             {
                 // wtf?
                 // Maybe make an error happen? but shouldn't be possible so
@@ -103,16 +105,36 @@ namespace Surge.Editor.Windows
             searchField.style.width = new StyleLength(StyleKeyword.Auto);
 
             var buttonGroup = root.CreateHorizontal();
-            buttonGroup.CreateButton("Blendshapes", () => searchField.value = "t:Blendshape ").WithGrow(1f);
-            buttonGroup.CreateButton("Materials", () => searchField.value = "t:Material ").WithGrow(1f);
-            buttonGroup.CreateButton("Everything", () => 
+            buttonGroup.CreateButton("Blendshapes", () => SetSearchType("Blendshape")).WithGrow(1f);
+            buttonGroup.CreateButton("Materials", () => SetSearchType("Material")).WithGrow(1f);
+            buttonGroup.CreateButton("Everything", () => SetSearchType(string.Empty)).WithGrow(1f);
+            void SetSearchType(string type)
             {
-                if (searchField.value == string.Empty)
-                    typeFilter.value = null;
-                else
-                    searchField.value = string.Empty;
-            }).WithGrow(1f);
-            searchField.Focus();
+                var text = searchField.value;
+                var tIndex = text.IndexOf("t:");
+                if (tIndex != -1)
+                {
+                    var tEnd = text.IndexOf(' ', tIndex);
+                    var oldType = text.Substring(tIndex, tEnd - tIndex + 1);
+                    var typeStr = string.IsNullOrEmpty(type) ? string.Empty : "t:" + type + ' ';
+                    text = text.Replace(oldType, typeStr);
+                    FocusSearch(text);
+                    return;
+                }
+                // if no type string found and 'everything' clicked
+                if (type == string.Empty)
+                {
+                    // if type filter not cleared, clear it 
+                    if (typeFilter.value != null)
+                        typeFilter.value = null;
+                    else // reset search if type filter already cleared
+                        FocusSearch(string.Empty);
+                    return;
+                }
+                // if no type string found, insert it at beginning
+                text = text.Insert(0, "t:" + type + ' ');
+                FocusSearch(text);
+            }
 
             // ui done, load things now
             // first: load searchable objects
@@ -121,7 +143,7 @@ namespace Surge.Editor.Windows
 
             // second: load searchable properties
             var bindingSearch = binder.GetPropertyBindings().Where(b => b.GameObject != avatarGameObject);
-            if (propertyGroup.GroupType is AnimationGroupType.Avatar)
+            if (animationGroup.GroupType is AnimationGroupType.Avatar)
                 bindingSearch = bindingSearch.GroupBy(p => p.QualifiedId).Select(g => g.First());
 
             var bindings = bindingSearch.ToArray();
@@ -145,10 +167,10 @@ namespace Surge.Editor.Windows
                         return;
 
                     var pseudoProperty = binding.GetPseudoProperty(index);
-                    SetProperty(pseudoProperty);
+                    SetProperty(false, pseudoProperty);
                 }
 
-                void SetProperty(SurgePseudoProperty? pseudoProperty = null)
+                void SetProperty(bool keepOpen, SurgePseudoProperty? pseudoProperty = null)
                 {
                     var propName = pseudoProperty?.Name ?? binding.Name;
                     var type = pseudoProperty is null ? binding.Type : PropertyValueType.Float;
@@ -202,8 +224,50 @@ namespace Surge.Editor.Windows
                     // apply the stuffs 
                     EditorUtility.SetDirty(property.serializedObject.targetObject);
                     property.serializedObject.ApplyModifiedProperties();
+                    Debug.Log(property.Property(nameof(AnimationPropertyInfo.Name)).GetValue());
 
-                    Close();
+                    // check if we are keeping window open, and if so schedule switching the property
+                    if (keepOpen)
+                        root.schedule.Execute(() =>
+                        {
+                            var propertiesArray = groupProperty.Property(nameof(AnimationGroupInfo.Properties)).Field("Array");
+                            bool pastCurrentProp = false;
+                            SerializedProperty? newProperty = null;
+                            for (int i = 0; i < propertiesArray.arraySize; i++)
+                            {
+                                var propAtIndex = propertiesArray.GetArrayElementAtIndex(i);
+                                // find current property
+                                if (!pastCurrentProp)
+                                {
+                                    if (SerializedProperty.EqualContents(propAtIndex, property))
+                                        continue;
+                                    pastCurrentProp = true;
+                                    continue;
+                                }
+                                // find next empty property
+                                var propAtIndexName = propAtIndex.Property(nameof(AnimationPropertyInfo.Name)).stringValue;
+                                if (propAtIndexName != string.Empty)
+                                    continue;
+                                newProperty = propAtIndex;
+                                break;
+                            }
+
+                            // no suitable property found, create new.
+                            if (newProperty is null)
+                            {
+                                var newPropertyIndex = propertiesArray.arraySize++;
+                                newProperty = propertiesArray.GetArrayElementAtIndex(newPropertyIndex);
+                                propertiesArray.serializedObject.ApplyModifiedProperties();
+                                newProperty.SetValue(new AnimationPropertyInfo());
+                            }
+
+                            property = newProperty.Copy();
+                            Debug.Log(property.propertyPath + " | " + property.name);
+                        }).StartingIn(100); // fuckit, random 100ms delay, i think it's possible for the values to have not updated in time otherwise??? (someone please help me)
+
+
+                    if (!keepOpen)
+                        Close();
                 }
 
                 var isTriOrQuadVector = binding.Type is PropertyValueType.Vector3 or PropertyValueType.Vector4;
@@ -211,7 +275,7 @@ namespace Surge.Editor.Windows
                 cell.SetData
                     (binding,
                     binder.GetPropertyValue(binding),
-                    () => SetProperty(),
+                    shiftClick => SetProperty(shiftClick),
                     () => Selection.activeGameObject = binding.GameObject,
                     
                     // Context Menu Actions
@@ -219,7 +283,7 @@ namespace Surge.Editor.Windows
                     isVector ? () => HandlePseudoProperty(1) : null,
                     isTriOrQuadVector ? () => HandlePseudoProperty(2) : null,
                     binding.Type is PropertyValueType.Vector4 ? () => HandlePseudoProperty(3) : null,
-                    propertyGroup.GroupType is not AnimationGroupType.Avatar
+                    animationGroup.GroupType is not AnimationGroupType.Avatar
                 );
             });
 
@@ -313,10 +377,10 @@ namespace Surge.Editor.Windows
             var previousContext = property.Property(nameof(AnimationPropertyInfo.ContextType)).stringValue;
 
             // If this is a group type that uses shared animation states, pull shared data to filter the search with
-            var isSharedValueType = propertyGroup.GroupType is AnimationGroupType.ObjectToggle or AnimationGroupType.Normal or AnimationGroupType.Avatar;
-            var previousProperty = isSharedValueType ? propertyGroup.Properties.FirstOrDefault()?.Name : property.Property(nameof(AnimationPropertyInfo.Name)).stringValue;
-            var previousValueType = isSharedValueType ? propertyGroup.SharedValueType : (PropertyValueType)property.Property(nameof(AnimationPropertyInfo.ValueType)).enumValueIndex;
-            var previousColorType = isSharedValueType ? propertyGroup.SharedColorType : (PropertyColorType)property.Property(nameof(AnimationPropertyInfo.ColorType)).enumValueIndex;
+            var isSharedValueType = animationGroup.GroupType is AnimationGroupType.ObjectToggle or AnimationGroupType.Normal or AnimationGroupType.Avatar;
+            var previousProperty = isSharedValueType ? animationGroup.Properties.FirstOrDefault()?.Name : property.Property(nameof(AnimationPropertyInfo.Name)).stringValue;
+            var previousValueType = isSharedValueType ? animationGroup.SharedValueType : (PropertyValueType)property.Property(nameof(AnimationPropertyInfo.ValueType)).enumValueIndex;
+            var previousColorType = isSharedValueType ? animationGroup.SharedColorType : (PropertyColorType)property.Property(nameof(AnimationPropertyInfo.ColorType)).enumValueIndex;
 
             typeFilter.value = Type.GetType(previousContext);
 
@@ -327,7 +391,7 @@ namespace Surge.Editor.Windows
                 {
                     if (string.CompareOrdinal(binding.Name, previousProperty) != 0)
                         continue;
-                    // TODO: this should probably allow object searches but goobie is lazy atm
+                    // TODO: this should probably allow object type searches but goobie is lazy atm
                     searchField.value = $"v:{GetPropertyTypeName(previousValueType, previousColorType)} ";
                     break;
                 }
@@ -340,8 +404,24 @@ namespace Surge.Editor.Windows
                 list.ScrollToItem(i);
                 break;
             }
+
+            // focus searchfield and then put text cursor at end of line
+            FocusSearch();
+            void FocusSearch(string? value = null)
+            {
+                if (value is not null)
+                    searchField.value = value;
+
+                searchField.Focus();
+                root.schedule.Execute(() =>
+                {
+                    using (var e = KeyDownEvent.GetPooled((char)0, KeyCode.End, EventModifiers.FunctionKey))
+                        searchField.SendEvent(e);
+                }).StartingIn(5); // 5 ms after, otherwise this sometimes fails ig (maybe needs to be higher for slower pcs)
+            }
         }
 
+        // note this is different from the one in SurgeUI for now
         private static string GetPropertyTypeName(PropertyValueType valueType, PropertyColorType colorType)
         {
             return valueType switch
@@ -390,7 +470,7 @@ namespace Surge.Editor.Windows
 
         private void OnLostFocus()
         {
-            Close();
+            //Close();
         }
 
         private void OnInspectorUpdate()
