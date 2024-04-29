@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Linq;
 using Surge.Editor.Elements;
 using Surge.Editor.Extensions;
@@ -215,8 +216,7 @@ namespace Surge.Editor.Windows
                         {
                             var defaultValue = (UnityEngine.Object)binder.GetPropertyValue(binding);
                             property.Property(nameof(AnimationPropertyInfo.DefaultObject)).SetValueNoRecord(defaultValue);
-                            var objectType = binding.GetPseudoProperty(0).Type;
-                            property.Property(nameof(AnimationPropertyInfo.ObjectValueType)).SetValueNoRecord(objectType.AssemblyQualifiedName);
+                            property.Property(nameof(AnimationPropertyInfo.ObjectValueType)).SetValueNoRecord(binding.ObjectType.AssemblyQualifiedName);
                             break;
                         }
                     }
@@ -303,7 +303,8 @@ namespace Surge.Editor.Windows
                 var valueTypeString = search.Split(' ').FirstOrDefault(s => s.Length > 1 && string.CompareOrdinal(s[..2], "v:") == 0);
                 var valueTypeFilter = PropertyValueType.Boolean;
                 var colorTypeFilter = PropertyColorType.None;
-                var valueTypeOnly = !string.IsNullOrEmpty(valueTypeString) && TryGetPropertyType(valueTypeString[2..], out valueTypeFilter, out colorTypeFilter);
+                var objectTypeFilter = string.Empty;
+                var valueTypeOnly = !string.IsNullOrEmpty(valueTypeString) && TryGetPropertyType(valueTypeString[2..], out valueTypeFilter, out colorTypeFilter, out objectTypeFilter);
                 if (valueTypeOnly)
                     search = search.Replace(valueTypeString, string.Empty);
 
@@ -327,7 +328,9 @@ namespace Surge.Editor.Windows
                         if (blendshapesOnly && source is not SurgePropertySource.Blendshape)
                             continue;
 
-                        if (valueTypeOnly && valueTypeFilter != group.Type || colorTypeFilter != group.Color)
+                        if (valueTypeOnly && valueTypeFilter != group.Type || // value type does not match
+                            colorTypeFilter != group.Color || // color type does not match
+                            !string.IsNullOrEmpty(objectTypeFilter) && string.Compare(group.ObjectType.Name, objectTypeFilter, StringComparison.OrdinalIgnoreCase) != 0)
                             continue;
 
                         foreach (var part in searchParts)
@@ -381,6 +384,7 @@ namespace Surge.Editor.Windows
             var previousProperty = isSharedValueType ? animationGroup.Properties.FirstOrDefault()?.Name : property.Property(nameof(AnimationPropertyInfo.Name)).stringValue;
             var previousValueType = isSharedValueType ? animationGroup.SharedValueType : (PropertyValueType)property.Property(nameof(AnimationPropertyInfo.ValueType)).enumValueIndex;
             var previousColorType = isSharedValueType ? animationGroup.SharedColorType : (PropertyColorType)property.Property(nameof(AnimationPropertyInfo.ColorType)).enumValueIndex;
+            var previousObjectType = isSharedValueType ? animationGroup.SharedObjectType : property.Property(nameof(AnimationPropertyInfo.ObjectValueType)).stringValue;
 
             typeFilter.value = Type.GetType(previousContext);
 
@@ -391,8 +395,7 @@ namespace Surge.Editor.Windows
                 {
                     if (string.CompareOrdinal(binding.Name, previousProperty) != 0)
                         continue;
-                    // TODO: this should probably allow object type searches but goobie is lazy atm
-                    searchField.value = $"v:{GetPropertyTypeName(previousValueType, previousColorType)} ";
+                    searchField.value = $"v:{SurgeUI.GetPropertyTypeName(previousValueType, previousColorType, previousObjectType)} ";
                     break;
                 }
             }
@@ -421,29 +424,9 @@ namespace Surge.Editor.Windows
             }
         }
 
-        // note this is different from the one in SurgeUI for now
-        private static string GetPropertyTypeName(PropertyValueType valueType, PropertyColorType colorType)
+        private static bool TryGetPropertyType(string name, out PropertyValueType valueType, out PropertyColorType colorType, out string objectTypeName)
         {
-            return valueType switch
-            {
-                PropertyValueType.Boolean => "Bool",
-                PropertyValueType.Integer => "Int",
-                PropertyValueType.Float => "Float",
-                PropertyValueType.Vector2 => "Vector2",
-                PropertyValueType.Vector3 or PropertyValueType.Vector4 => colorType switch
-                {
-                    PropertyColorType.None => valueType is PropertyValueType.Vector3 ? "Vector3" : "Vector4",
-                    PropertyColorType.RGB => valueType is PropertyValueType.Vector3 ? "RGB" : "RGBA",
-                    PropertyColorType.HDR => valueType is PropertyValueType.Vector3 ? "HDR" : "HDRA",
-                    _ => "<null>",
-                },
-                PropertyValueType.Object => "Object",
-                _ => "<null>",
-            };
-        }
-
-        private static bool TryGetPropertyType(string name, out PropertyValueType valueType, out PropertyColorType colorType)
-        {
+            objectTypeName = string.Empty;
             var lowercase = name.ToLower();
 
             valueType = lowercase switch
@@ -455,7 +438,7 @@ namespace Surge.Editor.Windows
                 "vector3" or "rgb" or "hdr" => PropertyValueType.Vector3,
                 "vector4" or "rgba" or "hdra" => PropertyValueType.Vector4,
                 "object" => PropertyValueType.Object,
-                _ => (PropertyValueType)(-1),
+                _ => PropertyValueType.Object,
             };
 
             colorType = lowercase switch
@@ -465,7 +448,10 @@ namespace Surge.Editor.Windows
                 _ => PropertyColorType.None,
             };
 
-            return (int)valueType != -1;
+            if (valueType is PropertyValueType.Object && lowercase != "object")
+                objectTypeName = lowercase;
+
+            return true; // because we allow searching for object types, this method will never fail. keeping this here just in case though.
         }
 
         private void OnLostFocus()

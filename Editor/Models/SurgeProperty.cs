@@ -21,6 +21,8 @@ namespace Surge.Editor.Models
         public PropertyValueType Type { get; }
         
         public PropertyColorType Color { get; }
+
+        public Type? ObjectType { get; }
         
         public GameObject GameObject { get; }
         
@@ -35,13 +37,14 @@ namespace Surge.Editor.Models
 
         public int Length => PseudoProperties?.Count ?? 1;
 
-        public SurgeProperty(string name, string path, Type contextType, PropertyValueType type, PropertyColorType color,
+        public SurgeProperty(string name, string path, Type contextType, PropertyValueType type, PropertyColorType color, Type? objectType,
             SurgePropertySource source, GameObject gameObject, SurgePseudoProperty? pseudoProperty, IReadOnlyList<SurgePseudoProperty>? pseudoProperties)
         {
             Type = type;
             Name = name;
             Path = path;
             Color = color;
+            ObjectType = objectType;
             Source = source;
             GameObject = gameObject;
             ContextType = contextType;

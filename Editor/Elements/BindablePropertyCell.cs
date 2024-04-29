@@ -26,7 +26,8 @@ namespace Surge.Editor.Elements
 
         private Action? _onJump;
         private Color _currentColorValue;
-        
+
+        private PropertyValueType _valueType;
         private bool _isColor;
         private Action? _onVectorX;
         private Action? _onVectorY;
@@ -155,7 +156,7 @@ namespace Surge.Editor.Elements
         public void SetData(SurgeProperty property, object currentValue, Action<bool> onSelect, Action? onJump,
             Action? onVectorX, Action? onVectorY, Action? onVectorZ, Action? onVectorW, bool includePath)
         {
-            _propertyTypeLabel.Value = SurgeUI.GetPropertyTypeName(property.Type, property.Color, property.GetPseudoProperty(0).Type);
+            _propertyTypeLabel.Value = SurgeUI.GetPropertyTypeName(property.Type, property.Color, property.ObjectType);
             _propertyNameLabel.text = $"<b>{property.Name}</b>";
             _propertyContextLabel.text = $"{property.ContextType.Name}";
             if (includePath)
@@ -168,6 +169,7 @@ namespace Surge.Editor.Elements
 
             _onSelect = onSelect;
 
+            _valueType = property.Type;
             _isColor = property.Color is not PropertyColorType.None;
             if (_isColor)
             {
@@ -216,6 +218,14 @@ namespace Surge.Editor.Elements
         public static void FixSelector(VisualElement cell)
         {
             cell.RemoveFromClassList("unity-collection-view__item");
+        }
+
+        public static void SetVectorFloatMode(BindablePropertyCell cell, bool state = false)
+        {
+            if (cell._valueType is not (PropertyValueType.Vector2 or PropertyValueType.Vector3 or PropertyValueType.Vector4))
+                return;
+            cell._textField.Visible(state);
+            cell._selectButton.Visible(state);
         }
 
         private static string GetPaneOptionsImage()

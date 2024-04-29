@@ -234,7 +234,7 @@ namespace Surge.Editor.Elements
             _colorField.WithWidth(75f + extraWidth);
             _integerField.WithWidth(150f + extraWidth);
             _floatField.WithWidth(150f + extraWidth);
-            _objectField.WithWidth(130f + extraWidth);
+            _objectField.WithWidth(150f + extraWidth);
             _vector2Field[0][1].WithWidth(VectorFieldWidth + extraWidth);
             _vector3Field[0][2].WithWidth(VectorFieldWidth + extraWidth);
             _vector4Field[0][3].WithWidth(VectorFieldWidth + extraWidth);
