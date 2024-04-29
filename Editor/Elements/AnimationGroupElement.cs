@@ -29,6 +29,7 @@ namespace Surge.Editor.Elements
         private SerializedProperty? _sharedObjectTypeProperty;
         private SerializedProperty? _isPlatformExclusiveProperty;
         private SerializedProperty? _showSharedCurveProperty;
+        private SerializedProperty? _ignoreWarningsProperty;
         private SerializedProperty? _menuTypeProperty;
 
         // vars
@@ -62,6 +63,7 @@ namespace Surge.Editor.Elements
         private readonly LabelledEnumField _platformOnlyField;
         private readonly LabelledEnumField _easingField;
         private readonly SettingLabelElement _curveLabel;
+        private readonly SettingLabelElement _ignoreWarningsLabel;
 
         public AnimationGroupElement()
         {
@@ -184,6 +186,8 @@ namespace Surge.Editor.Elements
             _settingsContainer.Add(_platformOnlyField);
             _curveLabel = new SettingLabelElement("Curve", "This animation group uses a curve to determine it's output values.");
             _settingsContainer.Add(_curveLabel);
+            _ignoreWarningsLabel = new SettingLabelElement("Ignore Warnings", "This will ignore all 'property not found' warnings. The plugin will create all animations regardless of if it detects the property or not. Only use this if you know what you're doing.", SurgeUI.GetWarningImage());
+            _settingsContainer.Add(_ignoreWarningsLabel);
 
             ContextualMenuManipulator settingMenu = new(SettingsMenuPopulate);
             settingMenu.activators.Add(new ManipulatorActivationFilter { button = MouseButton.RightMouse });
@@ -208,6 +212,7 @@ namespace Surge.Editor.Elements
             var platformProperty = property.Property(nameof(AnimationGroupInfo.PlatformType));
             _showSharedCurveProperty = property.Property(nameof(AnimationGroupInfo.ShowSharedCurve));
             var sharedCurveProperty = property.Property(nameof(AnimationGroupInfo.SharedCurve));
+            _ignoreWarningsProperty = property.Property(nameof(AnimationGroupInfo.IgnoreWarnings));
 
             // bind properties
             _toggleField.BindProperty(_toggleTypeProperty);
@@ -308,6 +313,10 @@ namespace Surge.Editor.Elements
             evt.menu.AppendAction("Custom Animation Curve",
                 evt => UpdateValues(_showSharedCurveProperty),
                 !allowCurve ? lockedStatus : _showSharedCurveProperty?.boolValue ?? false ? enabledStatus : disabledStatus);
+            evt.menu.AppendSeparator();
+            evt.menu.AppendAction("⚠️ Ignore Warnings",
+                evt => UpdateValues(_ignoreWarningsProperty),
+                _ignoreWarningsProperty?.boolValue ?? false ? enabledStatus : disabledStatus);
 
             void UpdateValues(SerializedProperty? prop)
             {
@@ -340,6 +349,9 @@ namespace Surge.Editor.Elements
 
             if (_isPlatformExclusiveProperty is not null)
                 _platformOnlyField.Visible(_isPlatformExclusiveProperty.boolValue);
+
+            if (_ignoreWarningsProperty is not null)
+                _ignoreWarningsLabel.Visible(_ignoreWarningsProperty.boolValue);
 
             if (_objectsProperty is not null && _propertiesProperty is not null)
             {

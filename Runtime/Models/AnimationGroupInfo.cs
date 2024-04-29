@@ -45,6 +45,9 @@ namespace Surge.Models
         [field: SerializeField]
         public AnimationCurve SharedCurve { get; private set; } = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
+        [field: SerializeField]
+        public bool IgnoreWarnings { get; private set; } = false;
+
         public AnimationGroupInfo(AnimationGroupType type)
         {
             GroupType = type;

@@ -26,6 +26,8 @@ namespace Surge.Editor.Elements
         private SerializedProperty? _sharedValueTypeProperty;
         private SerializedProperty? _sharedColorTypeProperty;
         private SerializedProperty? _sharedObjectTypeProperty;
+        // properties: ignore warnings property
+        private SerializedProperty? _ignoreWarningsProperty;
 
         // vars
         private AnimationGroupType _groupType;
@@ -157,6 +159,7 @@ namespace Surge.Editor.Elements
             _sharedValueTypeProperty = groupProperty.Property(nameof(AnimationGroupInfo.SharedValueType));
             _sharedColorTypeProperty = groupProperty.Property(nameof(AnimationGroupInfo.SharedColorType));
             _sharedObjectTypeProperty = groupProperty.Property(nameof(AnimationGroupInfo.SharedObjectType));
+            _ignoreWarningsProperty = groupProperty.Property(nameof(AnimationGroupInfo.IgnoreWarnings));
 
             // set vars
             _groupType = type;
@@ -168,6 +171,7 @@ namespace Surge.Editor.Elements
             this.TrackPropertyValue(objectsProperty, _ => this.schedule.Execute(UpdateTargetObjects));
             // only track the first value type property, bc they should all get updated at the same time :clueless:
             this.TrackPropertyValue(_sharedValueTypeProperty!, prop => CheckForIssues());
+            this.TrackPropertyValue(_ignoreWarningsProperty!, prop => CheckForIssues());
         }
 
         private void UpdateTargetObjects()
@@ -209,6 +213,7 @@ namespace Surge.Editor.Elements
                 _sharedValueTypeProperty is null ||
                 _sharedColorTypeProperty is null ||
                 _sharedObjectTypeProperty is null ||
+                _ignoreWarningsProperty is null ||
                 _bindingService is null)
                 return;
 
@@ -225,7 +230,7 @@ namespace Surge.Editor.Elements
             if (!_bindingService.TryGetPropertyBinding(contextType, name, out SurgeProperty binding, out bool pseudo))
             {
                 _issueIndicator.style.backgroundImage = SurgeUI.GetWarningImage();
-                _issueIndicator.Visible(true);
+                _issueIndicator.Visible(!_ignoreWarningsProperty.boolValue);
                 _propertyTypeLabel.Visible(false);
                 _issueIndicator.tooltip = $"Animatable property with name \"{name}\" not found on any components of type \"{contextType?.Name ?? "<null>"}\".";
 
