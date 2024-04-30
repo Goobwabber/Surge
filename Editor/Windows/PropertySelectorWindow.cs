@@ -260,7 +260,6 @@ namespace Surge.Editor.Windows
                             }
 
                             property = newProperty.Copy();
-                            Debug.Log(property.propertyPath + " | " + property.name);
                         }).StartingIn(100); // fuckit, random 100ms delay, i think it's possible for the values to have not updated in time otherwise??? (someone please help me)
 
 

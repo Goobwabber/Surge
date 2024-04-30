@@ -34,8 +34,6 @@ namespace Surge.Editor.Elements
 
         public void Push(Object[]? targets)
         {
-            var seenTypes = RemoveDuplicateTypes ? new List<Type?>() : null;
-
             choices = targets.SelectMany(t =>
             {
                 var gameObject = t as GameObject;
@@ -43,15 +41,7 @@ namespace Surge.Editor.Elements
                     gameObject = component.gameObject;
 
                 return gameObject.AsNullable()?.GetComponents<Component>()?.Select(c => c.GetType()) ?? new List<Type>(0);
-            }).Where(t =>
-            {
-                if (!RemoveDuplicateTypes)
-                    return true;
-                if (seenTypes!.Contains(t))
-                    return false;
-                seenTypes!.Add(t);
-                return true;
-            }).ToList();
+            }).Distinct().ToList();
 
             choices.Insert(0, typeof(GameObject));
             

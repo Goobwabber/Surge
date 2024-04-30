@@ -4,9 +4,11 @@ using Surge.Editor.Services;
 using Surge.Editor.Windows;
 using Surge.Models;
 using System;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
+using UnityEngine.Pool;
 using UnityEngine.UIElements;
 
 namespace Surge.Editor.Elements
@@ -53,6 +55,7 @@ namespace Surge.Editor.Elements
             _componentField.style.textOverflow = TextOverflow.Ellipsis;
             _componentField.tooltip = "The component type the target property is located on.";
             _componentField.RemoveDuplicateTypes = true;
+            _componentField.NullSelection = true;
             this.Add(_componentField);
 
             _propertyNameField = new TextField().WithHeight(20f).WithGrow(1f);
@@ -111,10 +114,11 @@ namespace Surge.Editor.Elements
             _componentField.RegisterValueChangedCallback(evt =>
             {
                 // if null or if property is already set to value, return
-                if (evt.newValue is null || evt.newValue.AssemblyQualifiedName == _contextTypeProperty.stringValue)
+                var newValue = evt.newValue?.AssemblyQualifiedName ?? string.Empty;
+                if (newValue == _contextTypeProperty.stringValue)
                     return;
-                _componentField.tooltip = $"The component type the target property is located on. ({evt.newValue.Name})";
-                _contextTypeProperty.SetValue(evt.newValue.AssemblyQualifiedName);
+                _componentField.tooltip = "The component type the target property is located on." + evt.newValue is not null ? $" ({newValue})" : string.Empty;
+                _contextTypeProperty.SetValue(newValue);
                 CheckForIssues();
             });
 
@@ -226,21 +230,53 @@ namespace Surge.Editor.Elements
             }
 
             var contextType = _componentField.value;
-            // TODO: make asynchronous :plead:
-            if (!_bindingService.TryGetPropertyBinding(contextType, name, out SurgeProperty binding, out bool pseudo))
+            SurgeProperty binding = null;
+            var pseudo = false;
+            var multiBinding = false;
+            if (contextType == null)
+            {
+                // TODO: make these asynchronous :plead:
+                var bindings = ListPool<SurgeProperty>.Get();
+                if (!_bindingService.TryGetPropertyBindings(name, bindings, out pseudo))
+                {
+                    _issueIndicator.style.backgroundImage = SurgeUI.GetWarningImage();
+                    _issueIndicator.Visible(!_ignoreWarningsProperty.boolValue);
+                    _propertyTypeLabel.Visible(false);
+                    _issueIndicator.tooltip = $"Animatable property with name \"{name}\" not found on any components of type \"{contextType?.Name ?? "any"}\".";
+                    return;
+                }
+
+                multiBinding = true;
+                // property path IS valid, so we should get the first one
+                binding = bindings.First(); // if this ever fails fix it.
+                // check if value types are same on all of them
+                var conflicting = bindings.FirstOrDefault(b => b.Type != binding.Type || b.Color != binding.Color || b.ObjectType != binding.ObjectType);
+                if (conflicting != null)
+                {
+                    _issueIndicator.style.backgroundImage = SurgeUI.GetErrorImage();
+                    _issueIndicator.Visible(true);
+                    _propertyTypeLabel.Visible(false);
+                    var bindingType = SurgeUI.GetPropertyTypeName(binding.Type, binding.Color, binding.ObjectType);
+                    var conflictingType = SurgeUI.GetPropertyTypeName(conflicting.Type, conflicting.Color, conflicting.ObjectType);
+                    _issueIndicator.tooltip = $"First found property on \"{binding.ContextType.Name}\" has value type \"{bindingType}\", but a property with the same name was found on \"{conflicting.ContextType.Name}\" that has value type \"{conflictingType}\".";
+                    return;
+                }
+
+                // if all good, tell user info!
+                _issueIndicator.style.backgroundImage = SurgeUI.GetInfoImage();
+                _issueIndicator.Visible(true);
+                var contextTypes = bindings.Select(b => $"\"{b.ContextType.Name}\"").Distinct().ToList();
+                var lastContextType = contextTypes.Last();
+                contextTypes.RemoveAt(contextTypes.Count - 1);
+                var contextTypesStr = string.Join(", ", contextTypes);
+                _issueIndicator.tooltip = $"Property was found on types {contextTypesStr}{(contextTypes.Count > 0 ? ", and " : string.Empty)}{lastContextType}.";
+            }
+            else if (!_bindingService.TryGetPropertyBinding(contextType, name, out binding, out pseudo))
             {
                 _issueIndicator.style.backgroundImage = SurgeUI.GetWarningImage();
                 _issueIndicator.Visible(!_ignoreWarningsProperty.boolValue);
                 _propertyTypeLabel.Visible(false);
-                _issueIndicator.tooltip = $"Animatable property with name \"{name}\" not found on any components of type \"{contextType?.Name ?? "<null>"}\".";
-
-                // didnt find property so murder value types before return (and apply them at the same time)
-                // Note: I commented out this code because i think its a better experience for the user if we dont do it
-                //_valueTypeProperty.SetValueNoRecord(PropertyValueType.Boolean);
-                //_colorTypeProperty.SetValueNoRecord(PropertyColorType.None);
-                //_objectTypeProperty.SetValueNoRecord(string.Empty);
-                //EditorUtility.SetDirty(_valueTypeProperty.serializedObject.targetObject);
-                //_valueTypeProperty.serializedObject.ApplyModifiedProperties();
+                _issueIndicator.tooltip = $"Animatable property with name \"{name}\" not found on any components of type \"{contextType?.Name ?? "any"}\".";
                 return;
             }
 
@@ -275,7 +311,8 @@ namespace Surge.Editor.Elements
             }
 
             _propertyTypeLabel.Visible(true);
-            _issueIndicator.Visible(false);
+            if (!multiBinding)
+                _issueIndicator.Visible(false);
         }
 
         private static void ShowPropertyWindow(SerializedProperty? property, BindingService bindingService)
